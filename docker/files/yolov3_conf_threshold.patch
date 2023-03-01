@@ -1,0 +1,11 @@
+--- /usr/share/vitis_ai_library/models/u55c-u50lv-DPUCAHX8H-DWC/yolov3_voc_tf/yolov3_voc_tf.prototxt.bak	2023-03-01 14:49:05.717801754 +0900
++++ /usr/share/vitis_ai_library/models/u55c-u50lv-DPUCAHX8H-DWC/yolov3_voc_tf/yolov3_voc_tf.prototxt	2023-03-01 14:49:14.269926118 +0900
+@@ -16,7 +16,7 @@
+     layer_name: "59"
+     layer_name: "67"
+     layer_name: "75"
+-    conf_threshold: 0.3
++    conf_threshold: 0.1
+     nms_threshold: 0.45
+     biases: 10
+     biases: 13

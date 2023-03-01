@@ -1,0 +1,8 @@
+/bin
+/lib
+/obj
+/OpenSiv3D
+/test_images
+*.png
+*.jpg
+*.ts

@@ -1,0 +1,44 @@
+[video]
+cameras = [
+    { location = "rtsp://localhost:8554/test0a", model = "yolov3", labels = [ 14 ] },
+    { location = "rtsp://localhost:8554/test05", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
+    { location = "rtsp://localhost:8554/test00", model = "bcc" },
+    { location = "rtsp://localhost:8554/test01", model = "bcc" },
+    { location = "rtsp://localhost:8554/test02", model = "bcc" },
+    { location = "rtsp://localhost:8554/test03", model = "bcc" },
+    { location = "rtsp://localhost:8554/test04", model = "bcc" },
+    { location = "rtsp://localhost:8554/test06", model = "bcc" },
+    { location = "rtsp://localhost:8554/test07", model = "bcc" },
+    { location = "rtsp://localhost:8554/test08", model = "bcc" },
+    { location = "rtsp://localhost:8554/test09", model = "bcc" },
+]
+
+device-index = -1
+
+focus-size = 2
+focus-duration = 3
+
+output-width = 1920
+output-height = 1080
+output-bitrate = 16000
+
+#output-width = 3840
+#output-height = 2160
+#output-bitrate = 20000
+
+rtsp-server-port = 8555
+
+[ml.yolov3]
+xmodels = [ "/usr/share/vitis_ai_library/models/u55c-u50lv-DPUCAHX8H-DWC/yolov3_voc_tf/yolov3_voc_tf.xmodel" ]
+address = "tcp://127.0.0.1:5555"
+max_batch_latency = 100
+max_batch_size = 3
+num_workers = 2
+
+[ml.bcc]
+xmodels = [ "/usr/share/vitis_ai_library/models/u55c-u50lv-DPUCAHX8H-DWC/bcc_pt/bcc_pt.xmodel" ]
+address = "tcp://127.0.0.1:5556"
+max_batch_latency = 100
+max_batch_size = 3
+num_workers = 2
+
