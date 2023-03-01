@@ -21,10 +21,14 @@ with low CPU usage.
 
 Please see [INSTALL.md](INSTALL.md) for installation.
 
-## Build Docker image
+## Build or pull Docker image
 
 ```bash
 $ ./docker/build.sh
+
+or
+
+$ docker pull anjn/alveo-video-analytics-demo:u30-u5x
 ```
 
 ## Prepare videos

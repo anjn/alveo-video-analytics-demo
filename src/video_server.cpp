@@ -444,8 +444,10 @@ int main(int argc, char** argv)
     int focus_size       = toml::find<int>(config, "video", "focus-size");
     int focus_duration   = toml::find<int>(config, "video", "focus-duration");
 
-    bcc_server_address    = toml::find<std::string>(config, "ml", "bcc", "address");
-    yolov3_server_address = toml::find<std::string>(config, "ml", "yolov3", "address");
+    std::string ml_server_ip = "127.0.0.1";
+    if (const char* e = std::getenv("ML_SERVER_IP")) ml_server_ip = e;
+    bcc_server_address    = "tcp://" + ml_server_ip + ":" + std::to_string(toml::find<int>(config, "ml", "bcc", "port"));
+    yolov3_server_address = "tcp://" + ml_server_ip + ":" + std::to_string(toml::find<int>(config, "ml", "yolov3", "port"));
 
     gst_init(&argc, &argv);
 
@@ -462,7 +464,7 @@ int main(int argc, char** argv)
 
         if (model == "bcc")
         {
-            auto ml = std::make_shared<rtsp_ml<app2queue_bcc, hw_config_u30>>(loc, device_index);
+            auto ml = std::make_shared<rtsp_ml<app2queue_bcc, hw_config_u30>>(loc, device_index++);
             ml->start();
             queues.push_back(ml->queue);
             mls.push_back(ml);
@@ -470,7 +472,7 @@ int main(int argc, char** argv)
         else if (model == "yolov3")
         {
             std::vector<int> labels = toml::get<std::vector<int>>(t.at("labels"));
-            auto ml = std::make_shared<rtsp_ml<app2queue_yolov3, hw_config_u30>>(loc, device_index);
+            auto ml = std::make_shared<rtsp_ml<app2queue_yolov3, hw_config_u30>>(loc, device_index++);
             ml->start();
             ml->a2q->set_detect_label_ids(labels);
             queues.push_back(ml->queue);

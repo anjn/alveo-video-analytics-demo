@@ -15,6 +15,8 @@ struct hw_config_u30
         GstElement* elm,
         int dev_idx = 0
     ) {
+        dev_idx %= 2;
+
         assert(elm);
         assert(0 <= dev_idx && dev_idx < 2);
 
@@ -30,8 +32,10 @@ struct hw_config_u30
         GstElement* elm,
         int dev_idx = 0
     ) {
+        dev_idx %= 2;
+
         assert(elm);
-        assert(0 <= dev_idx && dev_idx < 32);
+        assert(0 <= dev_idx && dev_idx < 2);
 
         g_object_set(G_OBJECT(elm),
                      "dev-idx", dev_idx,

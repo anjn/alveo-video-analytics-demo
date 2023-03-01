@@ -37,7 +37,7 @@ struct rtsp_server
     {
         static int dev_idx = 1;
 
-        if (device_index >= 0) dev_idx = device_index;
+        if (device_index >= 0) dev_idx = device_index % 2;
         else dev_idx = (dev_idx + 1) % 2;
 
         g_print("rtsp_server: dev-idx = %d\n", dev_idx);

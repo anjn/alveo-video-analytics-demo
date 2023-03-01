@@ -20,7 +20,8 @@ inf_server_config load_config(const T& root, const std::string& name)
     auto obj = toml::find(root, name);
     conf.name = name;
     conf.xmodels = toml::find<std::vector<std::string>>(obj, "xmodels");
-    conf.address = toml::find<std::string>(obj, "address");
+    int port = toml::find<int>(obj, "port");
+    conf.address = "tcp://*:" + std::to_string(port);
     conf.max_batch_latency = toml::find<int>(obj, "max_batch_latency");
     conf.max_batch_size = toml::find<int>(obj, "max_batch_size");
     conf.num_workers = toml::find<int>(obj, "num_workers");

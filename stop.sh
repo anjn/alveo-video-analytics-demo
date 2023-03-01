@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-docker rm -f alveo-video-analytics-demo
+docker rm -f demo-video demo-ml
 
 tmux kill-session -t demo-session
 
