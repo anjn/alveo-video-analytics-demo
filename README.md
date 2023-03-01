@@ -1,16 +1,14 @@
-# Video+ML demo with Alveo U30 and U50LV
+# Video analytics demo using Alveo U30 and U50LV/U55C
 
 This demo shows
 - Simultaneous 32-ch 1080p15 low latency video decoding using U30
-- Real time crowd counting AI inference using U50LV
+- Real time crowd counting and object detection AI inference using U50LV/U55C
 
 with low CPU usage.
 
 ## System diagram
-![](images/system.png)
 
-## Demo
-![](images/demo.jpg)
+![](images/system.png)
 
 ## Prerequisites
 
