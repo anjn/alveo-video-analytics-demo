@@ -39,19 +39,23 @@ Use `videos/transcode.sh` to transcode video clips into a suitable foramt for RT
 ./videos/transcode.sh VIDEO_CLIP
 ```
 
+Video clips in `videos` directory will be streamed at `rtsp://YOUR_SERVER_IP:8554/testNN` by rtsp-simple-server. `NN` is the hexadecimal number starting from zero of the video clip ordered by its filename.
+
 ## Edit config.toml
 
 ### Add cameras
+
+Modify camera list in `config.toml' according to your prepared video clips or live cameras. You can choose `bcc` (crowd counting model) or `yolov3` (object detection model) for each camera. `RTSP_SERVER_IP` in `config.toml` will be automatically replaced with the actual docker container's IP at runtime.
 
 ```toml
 [video]
 cameras = [
     # YOLOv3 person detection
-    { location = "rtsp://localhost:8554/test00", model = "yolov3", labels = [ 14 ] },
+    { location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "yolov3", labels = [ 14 ] },
     # YOLOv3 bicyle/bus/car/motorbike detection
-    { location = "rtsp://localhost:8554/test01", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
+    { location = "rtsp://RTSP_SERVER_IP:8554/test01", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
     # Crowd counting
-    { location = "rtsp://localhost:8554/test02", model = "bcc" },
+    { location = "rtsp://RTSP_SERVER_IP:8554/test02", model = "bcc" },
 ```
 
 ## Run demo
@@ -59,6 +63,8 @@ cameras = [
 ```bash
 $ ./start.sh
 ```
+
+Open the RTSP stream (`rtsp://YOUR_SERVER_IP:8555/test`) using VLC.
 
 ## Stop demo
 
