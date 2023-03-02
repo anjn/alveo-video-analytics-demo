@@ -8,7 +8,7 @@ with low CPU usage.
 
 ## System diagram
 
-![](images/system.png)
+![](images/system.svg)
 
 ## Prerequisites
 
