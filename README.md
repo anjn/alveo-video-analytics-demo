@@ -45,7 +45,7 @@ Video clips in `videos` directory will be streamed at `rtsp://YOUR_SERVER_IP:855
 
 ### Add cameras
 
-Modify camera list in `config.toml' according to your prepared video clips or live cameras. You can choose `bcc` (crowd counting model) or `yolov3` (object detection model) for each camera. `RTSP_SERVER_IP` in `config.toml` will be automatically replaced with the actual docker container's IP at runtime.
+Modify camera list in `config.toml` according to your prepared video clips or live cameras. You can choose `bcc` (crowd counting model) or `yolov3` (object detection model) for each camera. `RTSP_SERVER_IP` in `config.toml` will be automatically replaced with the actual docker container's IP at runtime.
 
 ```toml
 [video]
