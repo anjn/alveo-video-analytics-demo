@@ -14,7 +14,7 @@
 #include "ml/yolov3/yolov3_server.hpp"
 
 template<typename T>
-inf_server_config load_config(const T& root, const std::string& name)
+inf_server_config load_config(const T& root, const std::string& name, const int default_max_batch_size)
 {
     inf_server_config conf;
     auto obj = toml::find(root, name);
@@ -25,6 +25,10 @@ inf_server_config load_config(const T& root, const std::string& name)
     conf.max_batch_latency = toml::find<int>(obj, "max_batch_latency");
     conf.max_batch_size = toml::find<int>(obj, "max_batch_size");
     conf.num_workers = toml::find<int>(obj, "num_workers");
+
+    if (default_max_batch_size > 0)
+        conf.max_batch_size = default_max_batch_size;
+
     return conf;
 }
 
@@ -32,13 +36,14 @@ int main (int argc, char** argv)
 {
     arg_begin("", 0, 0);
     arg_s(config, "config.toml", "Config file in TOML format");
+    arg_i(max_batch_size, -1, "This overwrites the setting in the config file");
     arg_end;
 
     const auto config_obj = toml::find(toml::parse(config), "ml");
 
-    yolov3_server server0 { load_config(config_obj, "yolov3") };
+    yolov3_server server0 { load_config(config_obj, "yolov3", max_batch_size) };
     server0.start(true);
 
-    bcc_server server1 { load_config(config_obj, "bcc") };
+    bcc_server server1 { load_config(config_obj, "bcc", max_batch_size) };
     server1.start();
 }

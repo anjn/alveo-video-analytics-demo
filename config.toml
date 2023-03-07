@@ -33,12 +33,12 @@ xmodels = [ "/usr/share/vitis_ai_library/models/u55c-u50lv-DPUCAHX8H-DWC/yolov3_
 port = 5555
 max_batch_latency = 100
 max_batch_size = 3
-num_workers = 2
+num_workers = 3
 
 [ml.bcc]
 xmodels = [ "/usr/share/vitis_ai_library/models/u55c-u50lv-DPUCAHX8H-DWC/bcc_pt/bcc_pt.xmodel" ]
 port = 5556
 max_batch_latency = 100
 max_batch_size = 3
-num_workers = 2
+num_workers = 3
 
