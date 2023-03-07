@@ -11,14 +11,16 @@ extern "C" {
 
 struct hw_config_u30
 {
+    static inline int max_devices = 2;
+
     static void set_decoder_params(
         GstElement* elm,
         int dev_idx = 0
     ) {
-        dev_idx %= 2;
+        dev_idx %= max_devices;
 
         assert(elm);
-        assert(0 <= dev_idx && dev_idx < 2);
+        assert(0 <= dev_idx && dev_idx < max_devices);
 
         g_object_set(G_OBJECT(elm),
                      "dev-idx", dev_idx,
@@ -32,10 +34,10 @@ struct hw_config_u30
         GstElement* elm,
         int dev_idx = 0
     ) {
-        dev_idx %= 2;
+        dev_idx %= max_devices;
 
         assert(elm);
-        assert(0 <= dev_idx && dev_idx < 2);
+        assert(0 <= dev_idx && dev_idx < max_devices);
 
         g_object_set(G_OBJECT(elm),
                      "dev-idx", dev_idx,

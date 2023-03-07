@@ -434,6 +434,13 @@ struct rtsp_ml
 
 int main(int argc, char** argv)
 {
+    arg_begin("", 0, 0);
+    arg_i(max_devices, 2, "Num available devices");
+    arg_end;
+
+    // HW config
+    hw_config_u30::max_devices = max_devices;
+
     // Load config
     const auto config = toml::parse("config.toml");
 

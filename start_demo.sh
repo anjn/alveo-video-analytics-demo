@@ -29,7 +29,10 @@ done
 cp /workspace/demo/config.toml .
 sed -i "s/RTSP_SERVER_IP/$RTSP_SERVER_IP/" config.toml
 
+# Count device
+max_devices=$(/opt/xilinx/xrt/bin/xbutil examine | grep u30 | wc -l)
+
 # Run
 ulimit -n 2048
 export GST_DEBUG=WARNING
-./video_server
+./video_server --max-devices $max_devices
