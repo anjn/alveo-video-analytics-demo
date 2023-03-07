@@ -38,22 +38,38 @@ fi
 
 prj_dir=$(dirname $(dirname $(readlink -f $0)))
 
-# Find device
-cmd=scan # for older xrt
-#cmd=examine
-xclmgmt=
-for x in $(/opt/xilinx/xrt/bin/xbmgmt $cmd | grep -E "$card" | sed -r 's/^.*inst=([0-9]*).*/\1/'); do
-    xclmgmt+="--device /dev/xclmgmt${x} "
-done
+if [[ -n $card ]] ; then
+    # Find device
+    cmd=scan # for older xrt
+    #cmd=examine
 
-xocl=
-for x in $(/opt/xilinx/xrt/bin/xbutil $cmd | grep -E "$card" | sed -r 's/^.*inst=([0-9]*).*/\1/'); do
-    xocl+="--device /dev/dri/renderD${x} "
-done
+    retry=10
 
-if [[ -z $xocl ]] || [[ -z $xclmgmt ]] ; then
-    echo "Error: Couldn't find $card"
-    exit 1
+    while : ; do
+        xclmgmt=
+        for x in $(/opt/xilinx/xrt/bin/xbmgmt $cmd | grep -E "$card" | sed -r 's/^.*inst=([0-9]*).*/\1/'); do
+            xclmgmt+="--device /dev/xclmgmt${x} "
+        done
+        
+        xocl=
+        for x in $(/opt/xilinx/xrt/bin/xbutil $cmd | grep -E "$card" | sed -r 's/^.*inst=([0-9]*).*/\1/'); do
+            xocl+="--device /dev/dri/renderD${x} "
+        done
+        
+        if [[ -n $xocl ]] && [[ -n $xclmgmt ]] ; then
+            break
+        fi
+
+        retry=$((retry-1))
+
+        if [[ $retry -le 0 ]] ; then
+            echo "Error: Timeout"
+            exit 1
+        fi
+
+        echo "Couldn't find card $card, waiting... (retry $retry)"
+        sleep 5
+    done
 fi
 
 # Enable X11
