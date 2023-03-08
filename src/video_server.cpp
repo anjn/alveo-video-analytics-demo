@@ -23,7 +23,6 @@
 
 using namespace std::chrono_literals;
 
-// TODO move to config
 std::string bcc_server_address = "tcp://127.0.0.1:5556";
 std::string yolov3_server_address = "tcp://127.0.0.1:5555";
 
@@ -81,33 +80,20 @@ struct app2queue_bcc : app2queue
     }
 };
 
-struct mytracker
-{
-    std::vector<int> target_label_ids;
-    byte_track::BYTETracker tracker;
-    int frame = 0;
-    int count = 0;
-    std::unordered_map<size_t, int> track_id_to_count;
-    std::unordered_map<size_t, size_t> track_id_to_last_detected;
-
-    mytracker(const std::vector<int>& ids): target_label_ids(ids), tracker(10) {}
-};
-
-template<typename T>
-byte_track::Rect<T> scale(const byte_track::Rect<T>& r, T value)
-{
-    return { r.x() * value, r.y() * value, r.width() * value, r.height() * value };
-};
-
 struct app2queue_yolov3 : app2queue
 {
-    yolov3_client::queue_t result_queue;
-    yolov3_client client;
-
-    std::vector<mytracker> trackers;
-
-    std::vector<cv::Scalar> color_palette;
-
+    struct mytracker
+    {
+        std::vector<int> target_label_ids;
+        byte_track::BYTETracker tracker;
+        int frame = 0;
+        int count = 0;
+        std::unordered_map<size_t, int> track_id_to_count;
+        std::unordered_map<size_t, size_t> track_id_to_last_detected;
+    
+        mytracker(const std::vector<int>& ids): target_label_ids(ids), tracker(10) {}
+    };
+    
     struct detection_result
     {
         byte_track::Rect<float> rect;
@@ -117,6 +103,19 @@ struct app2queue_yolov3 : app2queue
         size_t frame_id;
         int count;
     };
+
+    template<typename T>
+    static byte_track::Rect<T> scale(const byte_track::Rect<T>& r, T value)
+    {
+        return { r.x() * value, r.y() * value, r.width() * value, r.height() * value };
+    };
+
+    yolov3_client::queue_t result_queue;
+    yolov3_client client;
+
+    std::vector<mytracker> trackers;
+
+    std::vector<cv::Scalar> color_palette;
 
     std::vector<detection_result> detections;
 
@@ -394,8 +393,8 @@ struct compositor
     }
 };
 
-template<typename A2Q, typename HwConfig>
-struct rtsp_ml
+template<typename HwConfig>
+struct rtsp_ml_base
 {
     const int width;
     const int height;
@@ -407,11 +406,11 @@ struct rtsp_ml
 
     app2queue::queue_ptr_t queue;
 
-    std::shared_ptr<A2Q> a2q;
+    //std::shared_ptr<A2Q> a2q;
 
     GstElement* pipeline;
 
-    rtsp_ml(const std::string& location, int device_index) :
+    rtsp_ml_base(const std::string& location, int device_index) :
         width(960),
         height(540),
         receiver(location),
@@ -420,13 +419,32 @@ struct rtsp_ml
         queue(std::make_shared<app2queue::queue_t>())
     {}
 
-    void start()
+    virtual void start()
     {
         pipeline = build_pipeline(receiver, dec, scaler, sink);
         gst_element_set_state(pipeline, GST_STATE_PLAYING);
 
+        //a2q = std::make_shared<A2Q>(
+        //    sink.sink, queue, width, height
+        //);
+        //a2q->start();
+    }
+};
+
+template<typename A2Q, typename HwConfig>
+struct rtsp_ml : rtsp_ml_base<HwConfig>
+{
+    using parent_t = rtsp_ml_base<HwConfig>;
+    using parent_t::parent_t;
+
+    std::shared_ptr<A2Q> a2q;
+
+    void start() override
+    {
+        parent_t::start();
+
         a2q = std::make_shared<A2Q>(
-            sink.sink, queue, width, height
+            parent_t::sink.sink, parent_t::queue, parent_t::width, parent_t::height
         );
         a2q->start();
     }
@@ -458,11 +476,11 @@ int main(int argc, char** argv)
 
     gst_init(&argc, &argv);
 
-    std::vector<app2queue::queue_ptr_t> queues;
-
     int device_index = 0;
 
-    std::vector<std::any> mls;
+    std::vector<app2queue::queue_ptr_t> queues;
+    std::vector<std::shared_ptr<rtsp_ml_base<hw_config_u30>>> ml_pipelines;
+
     for (auto& t : toml::find<std::vector<toml::table>>(config, "video", "cameras"))
     {
         auto loc = toml::get<std::string>(t.at("location"));
@@ -470,22 +488,24 @@ int main(int argc, char** argv)
 
         std::cout << loc << ", " << model << std::endl;
 
+        auto& ml = ml_pipelines.emplace_back();
+
         if (model == "bcc")
         {
-            auto ml = std::make_shared<rtsp_ml<app2queue_bcc, hw_config_u30>>(loc, device_index++);
+            ml = std::make_shared<rtsp_ml<app2queue_bcc, hw_config_u30>>(loc, device_index++);
             ml->start();
-            queues.push_back(ml->queue);
-            mls.push_back(ml);
         }
         else if (model == "yolov3")
         {
+            auto yolo = std::make_shared<rtsp_ml<app2queue_yolov3, hw_config_u30>>(loc, device_index++);
+            yolo->start();
+
             std::vector<int> labels = toml::get<std::vector<int>>(t.at("labels"));
-            auto ml = std::make_shared<rtsp_ml<app2queue_yolov3, hw_config_u30>>(loc, device_index++);
-            ml->start();
-            ml->a2q->set_detect_label_ids(labels);
-            queues.push_back(ml->queue);
-            mls.push_back(ml);
+            yolo->a2q->set_detect_label_ids(labels);
+
+            ml = yolo;
         }
+        queues.push_back(ml->queue);
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
