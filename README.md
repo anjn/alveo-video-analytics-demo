@@ -6,7 +6,15 @@ This demo shows
 
 with low CPU usage.
 
-## System diagram
+## Demo overview
+
+![](images/system-overview.jpg)
+
+## Crowd counting demo example
+
+![](images/crowd-counting.jpg)
+
+## System architecture
 
 ![](images/system.svg)
 
