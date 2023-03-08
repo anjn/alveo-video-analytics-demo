@@ -312,7 +312,7 @@ struct compositor
 
     static void need_data(GstElement *source, guint size, this_type* obj)
     {
-        //std::cout << "need_data" << std::endl;
+        //std::cout << "compositor: need_data" << std::endl;
         obj->push_buffer();
     }
 
@@ -461,6 +461,7 @@ int main(int argc, char** argv)
     std::vector<app2queue::queue_ptr_t> queues;
 
     int device_index = 0;
+
     std::vector<std::any> mls;
     for (auto& t : toml::find<std::vector<toml::table>>(config, "video", "cameras"))
     {
@@ -485,7 +486,7 @@ int main(int argc, char** argv)
             queues.push_back(ml->queue);
             mls.push_back(ml);
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
     rtsp_server server("rtspsink", rtsp_server_port, device_index);
@@ -502,9 +503,6 @@ int main(int argc, char** argv)
     comp.focus_size = focus_size;
     comp.focus_duration = focus_duration;
     comp.start();
-
-    //queue2app q2a { queues[0], src.src };
-    //q2a.start();
 
     g_print ("stream ready at rtsp://127.0.0.1:%d/test\n", server.port);
 

@@ -183,7 +183,11 @@ struct app2queue
 
             proc_buffer(cv_buf->mat);
 
-            queue->push(cv_buf);
+            if (queue->size() > 10)
+                //std::cout << "app2queue : queue is full " << queue->size() << std::endl;
+                ;
+            else
+                queue->push(cv_buf);
 
             //gst_buffer_unref(buffer);
             gst_sample_unref(sample);

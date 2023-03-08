@@ -1,4 +1,8 @@
 #!/usr/bin/bash
+#set -x
+
+# Count available device
+max_devices=$(/opt/xilinx/xrt/bin/xbutil examine | grep u30 | wc -l)
 
 # Setup Video SDK
 LD_LIBRARY_PATH=/opt/xilinx/xrt/lib /opt/xilinx/xrm/bin/xrmd > /dev/null &
@@ -28,9 +32,6 @@ done
 # Copy config file
 cp /workspace/demo/config.toml .
 sed -i "s/RTSP_SERVER_IP/$RTSP_SERVER_IP/" config.toml
-
-# Count device
-max_devices=$(/opt/xilinx/xrt/bin/xbutil examine | grep u30 | wc -l)
 
 # Run
 ulimit -n 2048
