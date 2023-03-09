@@ -74,7 +74,7 @@ $ ./start.sh
 
 This demo uses [rtsp-simple-server](https://github.com/aler9/rtsp-simple-server) for streaming output. You can see the video in the following ways.
 
-- Open RTSP (`rtsp://YOUR_SERVER_IP:8555/test`) using VLC.
+- Open RTSP (`rtsp://YOUR_SERVER_IP:8554/test`) using VLC.
 - Open HLS (`http://YOUR_SERVER_IP:8888/test`) using web browser.
 - Open WebRTC (`http://YOUR_SERVER_IP:8889/test`) using web browser.
 
