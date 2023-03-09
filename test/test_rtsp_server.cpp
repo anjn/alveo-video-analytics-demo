@@ -19,10 +19,17 @@ int main(int argc, char** argv)
     rtsp_server server { "test", port, device_index };
     server.start();
 
-    videotestsrc src { width, height, 0, "NV12" };
+    videotestsrc src;
+
+    rawvideomedia raw;
+    raw.width = width;
+    raw.height = height;
+    raw.framerate_n = 15;
+    raw.format = "NV12";
+
     intervideosink sink { "test" };
 
-    auto pipeline = build_pipeline(src, sink);
+    auto pipeline = build_pipeline(src, raw, sink);
     gst_element_set_state(pipeline, GST_STATE_PLAYING);
 
     auto loop = g_main_loop_new(nullptr, false);

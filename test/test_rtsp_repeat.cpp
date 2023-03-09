@@ -19,9 +19,32 @@ int main(int argc, char** argv)
     arg_i(port, 8555, "Port");
     arg_end;
 
-    // Create rtsp server pipeline
-    rtsp_server server { "test", port };
-    server.start();
+//    // Create rtsp server pipeline
+//    rtsp_server server { "test", port };
+//    server.start();
+//
+//    // Create rtsp receiver pipeline
+//    rtsp_receiver receiver { location };
+//    vvas_dec<hw_config_u30> dec { dev_idx };
+//    vvas_scaler<hw_config_u30> scaler { dev_idx, width, height };
+//    appsink sink {};
+//
+//    auto pipeline0 = build_pipeline(receiver, dec, scaler, sink);
+//    gst_element_set_state(pipeline0, GST_STATE_PLAYING);
+//
+//    appsrc src1 {};
+//    intervideosink sink1 { "test" };
+//
+//    auto pipeline1 = build_pipeline(src1, sink1);
+//    gst_element_set_state(pipeline1, GST_STATE_PLAYING);
+//
+//    // Connect app sink and source by queue
+//    auto queue = create_app_queue();
+//
+//    app2queue a2q { sink.sink, queue, width, height };
+//    a2q.start();
+//    queue2app q2a { queue, src1.src };
+//    q2a.start();
 
     // Create rtsp receiver pipeline
     rtsp_receiver receiver { location };
@@ -29,14 +52,22 @@ int main(int argc, char** argv)
     vvas_scaler<hw_config_u30> scaler { dev_idx, width, height };
     appsink sink {};
 
-    auto pipeline0 = build_pipeline(receiver, dec, scaler, sink);
-    gst_element_set_state(pipeline0, GST_STATE_PLAYING);
+    build_pipeline_and_play(receiver, dec, scaler, sink);
 
-    appsrc src1 {};
-    intervideosink sink1 { "test" };
+    // Output pipeline
+    appsrc src1;
 
-    auto pipeline1 = build_pipeline(src1, sink1);
-    gst_element_set_state(pipeline1, GST_STATE_PLAYING);
+    //rawvideomedia raw;
+    //raw.width = width;
+    //raw.height = height;
+    //raw.framerate_n = 15;
+    //raw.format = "NV12";
+
+    vvas_enc<hw_config_u30> enc;
+
+    rtspclientsink sink1("rtsp://localhost:8554/test");
+
+    build_pipeline_and_play(src1, enc, sink1);
 
     // Connect app sink and source by queue
     auto queue = create_app_queue();

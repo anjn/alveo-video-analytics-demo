@@ -81,7 +81,10 @@ struct rtspclientsink
     {
         auto sink = gst_bin_get_by_name(GST_BIN(pipeline), sink_name.c_str());
         assert(sink);
-        g_object_set(G_OBJECT(sink), "location", location.c_str(), nullptr);
+        g_object_set(G_OBJECT(sink),
+                     "location", location.c_str(),
+                     "latency", 2000,
+                     nullptr);
         gst_object_unref(sink);
     }
 };
@@ -118,26 +121,56 @@ struct rtspclientsink
 
 struct videotestsrc
 {
-    const int width;
-    const int height;
     const int pattern;
-    const std::string format;
 
-    videotestsrc(
-        int width_, int height_, int pattern_ = 0, const std::string& format_ = "I420"
-    ) : 
-        width(width_),
-        height(height_),
-        pattern(pattern_),
-        format(format_)
+    videotestsrc(int pattern_ = 0) : 
+        pattern(pattern_)
     {}
 
     std::string get_description()
     {
         return
-            " videotestsrc pattern=" + std::to_string(pattern) +
-            " ! video/x-raw, format=" + format + ", width=" + std::to_string(width) + ", height=" + std::to_string(height)
+            " videotestsrc pattern=" + std::to_string(pattern)
             ;
+    }
+
+    void set_params(GstElement* pipeline) {}
+};
+
+struct rawvideomedia
+{
+    int width;
+    int height;
+    int framerate_n;
+    int framerate_d;
+    std::string format;
+
+    rawvideomedia() : 
+        width(0),
+        height(0),
+        framerate_n(0),
+        framerate_d(0),
+        format("")
+    {}
+
+    std::string get_description()
+    {
+        std::vector<std::string> params;
+        if (width > 0) params.emplace_back("width=" + std::to_string(width));
+        if (height > 0) params.emplace_back("height=" + std::to_string(height));
+        if (framerate_n > 0) {
+            int d = framerate_d > 0 ? framerate_d : 1;
+            params.emplace_back("framerate=" + std::to_string(framerate_n) + "/" + std::to_string(d));
+        }
+        if (format.size() > 0) params.emplace_back("format=" + format);
+
+        std::string desc = "video/x-raw";
+
+        for (auto p : params) {
+            desc += ", " + p;
+        }
+
+        return desc;
     }
 
     void set_params(GstElement* pipeline) {}
@@ -172,6 +205,8 @@ struct appsrc
         assert(src);
         g_object_set(G_OBJECT(src),
                      "is-live", true,
+                     "emit-signals", true,
+                     "format", GST_FORMAT_TIME,
                      nullptr);
     }
 };
@@ -247,6 +282,37 @@ struct vvas_scaler
         assert(scaler);
         HwConfig::set_scaler_params(scaler, dev_idx);
         gst_object_unref(scaler);
+    }
+};
+
+template<typename HwConfig>
+struct vvas_enc
+{
+    const int dev_idx;
+    const std::string enc_name;
+
+    int bitrate;
+
+    vvas_enc(int dev_idx_ = 0) :
+        dev_idx(dev_idx_),
+        enc_name(get_new_name("enc")),
+        bitrate(16000)
+    {}
+
+    std::string get_description()
+    {
+        return
+            " vvas_xvcuenc name=" + enc_name +
+            " ! video/x-h264"
+            ;
+    }
+
+    void set_params(GstElement* pipeline)
+    {
+        auto enc = gst_bin_get_by_name(GST_BIN(pipeline), enc_name.c_str());
+        assert(enc);
+        HwConfig::set_encoder_params(enc, dev_idx, bitrate);
+        gst_object_unref(enc);
     }
 };
 
@@ -363,7 +429,7 @@ struct x264enc
 
     std::string get_description()
     {
-        return " x264enc name=" + name;
+        return " x264enc name=" + name + " speed-preset=ultrafast tune=fastdecode key-int-max=15 bframes=0 bitrate=6000";
     }
 
     void set_params(GstElement* pipeline) {}
@@ -407,6 +473,14 @@ GstElement* build_pipeline(Args&&... args)
     // Set parameters
     (args.set_params(pipeline), ...);
 
+    return pipeline;
+}
+
+template<typename... Args>
+GstElement* build_pipeline_and_play(Args&&... args)
+{
+    auto pipeline = build_pipeline(args...);
+    gst_element_set_state(pipeline, GST_STATE_PLAYING);
     return pipeline;
 }
 

@@ -77,7 +77,8 @@ xhost +local:root || true
 
 # Ports
 for p in $(echo $port | sed 's/,/ /g') ; do
-    opts+="-p $p:$p "
+    p0=$(echo $p | sed 's|/.*||')
+    opts+="-p $p0:$p "
 done
 
 # Envs

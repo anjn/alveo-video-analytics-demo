@@ -12,7 +12,11 @@ until [[ $upsec -gt 90 ]] ; do
     sleep 2
 done
 
-tmux new-session -d -s demo-session "$dir/docker/run.sh --name demo-ml --port 8554,5555,5556 --card u5 ./start_ml.sh"
+if [[ -z $HOST_SERVER_IP ]] ; then
+    HOST_SERVER_IP=$(ip route get 1.2.3.4 | head -n 1 | awk '{print $7}')
+fi
+
+tmux new-session -d -s demo-session "$dir/docker/run.sh --name demo-ml --port 8554,5555,5556,8888,8889,8189/udp --env HOST_SERVER_IP=$HOST_SERVER_IP --card u5 ./start_ml.sh"
 tmux select-layout even-horizontal
 
 ip_ml=

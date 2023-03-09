@@ -13,14 +13,19 @@ if [[ $dir == "/workspace/demo" ]] ; then
     mkdir -p /tmp/build
     pushd /tmp/build
     cmake /workspace/demo
-    make -j$(nproc) test_rtsp_repeat
+    make -j$(nproc) test_rtspclientsink
     
     # Run
     export GST_DEBUG=WARNING
-    /tmp/build/test_rtsp_repeat
+    /tmp/build/test_rtspclientsink $*
 else
+    if [[ -z $HOST_SERVER_IP ]] ; then
+        HOST_SERVER_IP=$(ip route get 1.2.3.4 | head -n 1 | awk '{print $7}')
+    fi
+
     # Run docker
     cd $dir
-    ./docker/run.sh --card u30 --port 8554,8555,8888 ./test/test_rtsp_repeat.sh
+    ./docker/run.sh --card u30 --port 8554,8888,8889,8189/udp --env HOST_SERVER_IP=$HOST_SERVER_IP ./test/test_rtspclientsink.sh -- $*
 fi
+
 

@@ -18,15 +18,15 @@ device-index = -1
 focus-size = 2
 focus-duration = 3
 
-output-width = 1920
-output-height = 1080
+#output-width = 1920
+#output-height = 1080
+#output-bitrate = 12000
+
+output-width = 3840
+output-height = 2160
 output-bitrate = 16000
 
-#output-width = 3840
-#output-height = 2160
-#output-bitrate = 20000
-
-rtsp-server-port = 8555
+rtsp-server-location = "rtsp://RTSP_SERVER_IP:8554/test"
 
 [ml.yolov3]
 xmodels = [ "/usr/share/vitis_ai_library/models/u55c-u50lv-DPUCAHX8H-DWC/yolov3_voc_tf/yolov3_voc_tf.xmodel" ]

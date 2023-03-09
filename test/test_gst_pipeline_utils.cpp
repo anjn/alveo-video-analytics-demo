@@ -11,7 +11,14 @@ int main(int argc, char** argv)
     arg_i(height, 540, "Height");
     arg_end;
 
-    videotestsrc src(width, height);
+    videotestsrc src;
+
+    rawvideomedia raw;
+    raw.width = width;
+    raw.height = height;
+    raw.framerate_n = 15;
+    raw.format = "I420";
+
     autovideosink sink;
 
     auto pipeline = build_pipeline(src, sink);

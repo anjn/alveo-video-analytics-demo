@@ -406,8 +406,6 @@ struct rtsp_ml_base
 
     app2queue::queue_ptr_t queue;
 
-    //std::shared_ptr<A2Q> a2q;
-
     GstElement* pipeline;
 
     rtsp_ml_base(const std::string& location, int device_index) :
@@ -423,11 +421,6 @@ struct rtsp_ml_base
     {
         pipeline = build_pipeline(receiver, dec, scaler, sink);
         gst_element_set_state(pipeline, GST_STATE_PLAYING);
-
-        //a2q = std::make_shared<A2Q>(
-        //    sink.sink, queue, width, height
-        //);
-        //a2q->start();
     }
 };
 
@@ -462,12 +455,13 @@ int main(int argc, char** argv)
     // Load config
     const auto config = toml::parse("config.toml");
 
-    int rtsp_server_port = toml::find<int>(config, "video", "rtsp-server-port");
     int output_width     = toml::find<int>(config, "video", "output-width");
     int output_height    = toml::find<int>(config, "video", "output-height");
     int output_bitrate   = toml::find<int>(config, "video", "output-bitrate");
     int focus_size       = toml::find<int>(config, "video", "focus-size");
     int focus_duration   = toml::find<int>(config, "video", "focus-duration");
+
+    auto rtsp_server_location = toml::find<std::string>(config, "video", "rtsp-server-location");
 
     std::string ml_server_ip = "127.0.0.1";
     if (const char* e = std::getenv("ML_SERVER_IP")) ml_server_ip = e;
@@ -509,22 +503,22 @@ int main(int argc, char** argv)
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
-    rtsp_server server("rtspsink", rtsp_server_port, device_index);
-    server.bitrate = output_bitrate;
-    server.start();
+    // Output pipeline
+    appsrc src;
 
-    appsrc src {};
-    intervideosink sink { "rtspsink" };
+    vvas_enc<hw_config_u30> enc(device_index);
+    enc.bitrate = output_bitrate;
 
-    auto pipeline = build_pipeline(src, sink);
-    gst_element_set_state(pipeline, GST_STATE_PLAYING);
+    std::cout << rtsp_server_location << std::endl;
+    rtspclientsink sink(rtsp_server_location);
 
+    build_pipeline_and_play(src, enc, sink);
+
+    // Compositor
     compositor comp(queues, src.src, output_width, output_height);
     comp.focus_size = focus_size;
     comp.focus_duration = focus_duration;
     comp.start();
-
-    g_print ("stream ready at rtsp://127.0.0.1:%d/test\n", server.port);
 
     auto loop = g_main_loop_new(nullptr, false);
     g_main_loop_run(loop);

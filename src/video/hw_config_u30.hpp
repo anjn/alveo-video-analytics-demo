@@ -30,6 +30,27 @@ struct hw_config_u30
                      nullptr);
     }
 
+    static void set_encoder_params(
+        GstElement* elm,
+        int dev_idx,
+        int bitrate
+    ) {
+        dev_idx %= max_devices;
+
+        assert(elm);
+        assert(0 <= dev_idx && dev_idx < max_devices);
+
+        g_object_set(G_OBJECT(elm),
+                     "dev-idx", dev_idx,
+                     "target-bitrate", bitrate,
+                     "max-bitrate", bitrate,
+                     "b-frames", 0,
+                     "control-rate", 3,
+                     "scaling-list", 0,
+                     "rc-mode", false,
+                     nullptr);
+    }
+
     static void set_scaler_params(
         GstElement* elm,
         int dev_idx = 0

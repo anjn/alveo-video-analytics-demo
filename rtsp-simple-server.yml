@@ -25,8 +25,10 @@ readBufferCount: 512
 #   "user": "user",
 #   "password": "password",
 #   "path": "path",
-#   "action": "read|publish"
-#   "query": "url's raw query"
+#   "protocol": "rtsp|rtmp|hls|webrtc",
+#   "id": "id",
+#   "action": "read|publish",
+#   "query": "query"
 # }
 # If the response code is 20x, authentication is accepted, otherwise
 # it is discarded.
@@ -66,8 +68,7 @@ rtspDisable: no
 # UDP-multicast allows to save bandwidth when clients are all in the same LAN.
 # TCP is the most versatile, and does support encryption.
 # The handshake is always performed with TCP.
-#protocols: [udp, multicast, tcp]
-protocols: [tcp]
+protocols: [udp, multicast, tcp]
 # Encrypt handshakes and TCP streams with TLS (RTSPS).
 # Available values are "no", "strict", "optional".
 encryption: "no"
@@ -99,7 +100,7 @@ authMethods: [basic, digest]
 # RTMP parameters
 
 # Disable support for the RTMP protocol.
-rtmpDisable: yes
+rtmpDisable: no
 # Address of the RTMP listener. This is needed only when encryption is "no" or "optional".
 rtmpAddress: :1935
 # Encrypt connections with TLS (RTMPS).
@@ -119,9 +120,19 @@ rtmpServerCert: server.crt
 # HLS parameters
 
 # Disable support for the HLS protocol.
-hlsDisable: yes
+hlsDisable: no
 # Address of the HLS listener.
 hlsAddress: :8888
+# Enable TLS/HTTPS on the HLS server.
+# This is required for Low-Latency HLS.
+hlsEncryption: no
+# Path to the server key. This is needed only when encryption is yes.
+# This can be generated with:
+# openssl genrsa -out server.key 2048
+# openssl req -new -x509 -sha256 -key server.key -out server.crt -days 3650
+hlsServerKey: server.key
+# Path to the server certificate.
+hlsServerCert: server.crt
 # By default, HLS is generated only when requested by a user.
 # This option allows to generate it always, avoiding the delay between request and generation.
 hlsAlwaysRemux: no
@@ -152,20 +163,54 @@ hlsSegmentMaxSize: 50M
 # Value of the Access-Control-Allow-Origin header provided in every HTTP response.
 # This allows to play the HLS stream from an external website.
 hlsAllowOrigin: '*'
-# Enable TLS/HTTPS on the HLS server.
-# This is required for Low-Latency HLS.
-hlsEncryption: no
-# Path to the server key. This is needed only when encryption is yes.
-# This can be generated with:
-# openssl genrsa -out server.key 2048
-# openssl req -new -x509 -sha256 -key server.key -out server.crt -days 3650
-hlsServerKey: server.key
-# Path to the server certificate.
-hlsServerCert: server.crt
-# List of IPs or CIDRs of proxies behind the HLS server.
+# List of IPs or CIDRs of proxies placed before the HLS server.
 # If the server receives a request from one of these entries, IP in logs
 # will be taken from the X-Forwarded-For header.
 hlsTrustedProxies: []
+
+###############################################
+# WebRTC parameters
+
+# Disable support for the WebRTC protocol.
+webrtcDisable: no
+# Address of the WebRTC listener.
+webrtcAddress: :8889
+# Enable TLS/HTTPS on the WebRTC server.
+webrtcEncryption: no
+# Path to the server key.
+# This can be generated with:
+# openssl genrsa -out server.key 2048
+# openssl req -new -x509 -sha256 -key server.key -out server.crt -days 3650
+webrtcServerKey: server.key
+# Path to the server certificate.
+webrtcServerCert: server.crt
+# Value of the Access-Control-Allow-Origin header provided in every HTTP response.
+# This allows to play the WebRTC stream from an external website.
+webrtcAllowOrigin: '*'
+# List of IPs or CIDRs of proxies placed before the WebRTC server.
+# If the server receives a request from one of these entries, IP in logs
+# will be taken from the X-Forwarded-For header.
+webrtcTrustedProxies: []
+# List of ICE servers, in format type:user:pass:host:port or type:host:port.
+# type can be "stun", "turn" or "turns".
+# STUN servers are used to get the public IP of both server and clients.
+# TURN/TURNS servers are used as relay when a direct connection between server and clients is not possible.
+# if user is "AUTH_SECRET", then authentication is secret based.
+# the secret must be inserted into the pass field.
+webrtcICEServers: [stun:stun.l.google.com:19302]
+# List of public IP addresses that are to be used as a host.
+# This is used typically for servers that are behind 1:1 D-NAT.
+webrtcICEHostNAT1To1IPs: [%HOST_SERVER_IP%]
+# Address of a ICE UDP listener in format host:port.
+# If filled, ICE traffic will come through a single UDP port,
+# allowing the deployment of the server inside a container or behind a NAT.
+webrtcICEUDPMuxAddress: :8189
+# Address of a ICE TCP listener in format host:port.
+# If filled, ICE traffic will come through a single TCP port,
+# allowing the deployment of the server inside a container or behind a NAT.
+# At the moment, setting this parameter forces usage of the TCP protocol,
+# which is not optimal for WebRTC.
+webrtcICETCPMuxAddress:
 
 ###############################################
 # Path parameters
@@ -254,8 +299,8 @@ paths:
     # values: auto, incandescent, tungsten, fluorescent, indoor, daylight, cloudy, custom
     rpiCameraAWB: auto
     # denoise operating mode.
-    # values: auto, off, cdn_off, cdn_fast, cdn_hq
-    rpiCameraDenoise: auto
+    # values: off, cdn_off, cdn_fast, cdn_hq
+    rpiCameraDenoise: "off"
     # fixed shutter speed, in microseconds.
     rpiCameraShutter: 0
     # metering mode of the AEC/AGC algorithm.
@@ -282,6 +327,24 @@ paths:
     rpiCameraProfile: main
     # H264 level
     rpiCameraLevel: '4.1'
+    # Autofocus mode
+    # values: auto, manual, continuous
+    rpiCameraAfMode: auto
+    # Autofocus range
+    # values: normal, macro, full
+    rpiCameraAfRange: normal
+    # Autofocus speed
+    # values: normal, fast
+    rpiCameraAfSpeed: normal
+    # Lens position (for manual autofocus only), will be set to focus to a specific distance
+    # calculated by the following formula: d = 1 / value
+    # Examples: 0 moves the lens to infinity.
+    #           0.5 moves the lens to focus on objects 2m away.
+    #           2 moves the lens to focus on objects 50cm away.
+    rpiCameraLensPosition: 0.0
+    # Specifies the autofocus window, in the form x,y,width,height where the coordinates
+    # are given as a proportion of the entire image.
+    rpiCameraAfWindow:
 
     # Username required to publish.
     # SHA256-hashed values can be inserted with the "sha256:" prefix.

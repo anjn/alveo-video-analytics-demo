@@ -5,6 +5,7 @@
 max_devices=$(/opt/xilinx/xrt/bin/xbutil examine | grep u30 | wc -l)
 
 # Setup Video SDK
+export GST_PLUGIN_PATH=/usr/lib/x86_64-linux-gnu/gstreamer-1.0
 LD_LIBRARY_PATH=/opt/xilinx/xrt/lib /opt/xilinx/xrm/bin/xrmd > /dev/null &
 source /opt/xilinx/xcdr/setup.sh
 
