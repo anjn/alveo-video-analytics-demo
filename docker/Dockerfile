@@ -273,7 +273,8 @@ RUN --mount=type=cache,target=/var/lib/apt/lists \
         valgrind \
         gstreamer1.0-rtsp \
         gstreamer1.0-plugins-ugly \
-        netcat
+        netcat \
+        iputils-ping
 
 # rtsp-simple-server
 RUN --mount=type=cache,target=/root/downloads \

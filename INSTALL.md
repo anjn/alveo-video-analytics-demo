@@ -86,6 +86,12 @@ $ sudo usermod -aG docker $USER
 $ newgrp docker
 ```
 
+### Install Docker Compose
+```bash
+$ sudo curl -L "https://github.com/docker/compose/releases/download/v2.16.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+$ sudo chmod +x /usr/local/bin/docker-compose
+```
+
 ### Install XRT 2021.1 (2.11.691)
 ```bash
 $ wget "https://github.com/Xilinx/video-sdk/raw/v2.0/release/U30_Ubuntu_20.04_v2.0/xrt_202110.2.11.691_20.04-amd64-xrt.deb" -O xrt_202110.2.11.691_20.04-amd64-xrt.deb

@@ -58,6 +58,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/external/arg-master)
 include_directories(${PROJECT_SOURCE_DIR}/external/cppzmq-4.4.1)
 include_directories(${PROJECT_SOURCE_DIR}/external/toml11-3.7.1)
+include_directories(${PROJECT_SOURCE_DIR}/external/influxdb-cpp-2-master)
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
 function(add_target NAME DIR)
@@ -92,6 +93,7 @@ endforeach()
 foreach(TEST
         test_yolov3 test_yolov3_batch test_yolov3_server test_bcc_server
         test_gst_pipeline_utils test_rtsp_server test_rtsp_repeat test_rtspclientsink
+        test_influxdb
 )
     add_target(${TEST} test)
 endforeach()

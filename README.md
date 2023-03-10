@@ -85,9 +85,12 @@ $ ./stop.sh
 ```
 
 ## Third party software
+- https://github.com/aler9/rtsp-simple-server
 - https://github.com/zeromq/libzmq
 - https://github.com/zeromq/cppzmq
 - https://github.com/msgpack/msgpack-c
 - https://github.com/ToruNiina/toml11
 - https://github.com/gabime/spdlog
 - https://github.com/anjn/arg
+- https://github.com/TheYonkk/influxdb-cpp-2
+
