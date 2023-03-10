@@ -11,6 +11,7 @@
 #include <toml.hpp>
 #include <arg/arg.h>
 #include <ByteTrack/BYTETracker.h>
+#include <influxdb.hpp>
 
 #include "video/rtsp_server.hpp"
 #include "video/gst_app_utils.hpp"
@@ -26,12 +27,38 @@ using namespace std::chrono_literals;
 std::string bcc_server_address = "tcp://127.0.0.1:5556";
 std::string yolov3_server_address = "tcp://127.0.0.1:5555";
 
+struct metrics_client_influx_db
+{
+    std::string id;
+
+    influxdb_cpp::server_info server_info;
+
+    metrics_client_influx_db(
+        std::string id_,
+        influxdb_cpp::server_info server_info_
+    ) :
+        id(id_),
+        server_info(server_info_)
+    {}
+
+    void push(int count)
+    {
+        influxdb_cpp::builder()
+            .meas("count")
+            .tag("camera", id)
+            .field("value", count)
+            .post_http(server_info);
+    }
+};
+
 struct app2queue_bcc : app2queue
 {
     bcc_client::queue_t result_queue;
     bcc_client client;
     cv::Mat heatmap;
     int count;
+
+    std::shared_ptr<metrics_client_influx_db> metrics_client;
 
     app2queue_bcc(
         GstAppSink*& appsink_,
@@ -57,6 +84,9 @@ struct app2queue_bcc : app2queue
         while (result_queue->size() > 0)
         {
             std::tie(heatmap, count) = result_queue->pop();
+
+            if (metrics_client)
+                metrics_client->push(count);
         }
 
         // Draw heatmap
@@ -118,6 +148,8 @@ struct app2queue_yolov3 : app2queue
     std::vector<cv::Scalar> color_palette;
 
     std::vector<detection_result> detections;
+
+    std::shared_ptr<metrics_client_influx_db> metrics_client;
 
     app2queue_yolov3(
         GstAppSink*& appsink_,
@@ -215,6 +247,9 @@ struct app2queue_yolov3 : app2queue
 
                     detections.push_back(det);
                 }
+
+                if (metrics_client)
+                    metrics_client->push(detections.size());
 
                 // TODO Remove old track_id
             }
@@ -468,6 +503,10 @@ int main(int argc, char** argv)
     bcc_server_address    = "tcp://" + ml_server_ip + ":" + std::to_string(toml::find<int>(config, "ml", "bcc", "port"));
     yolov3_server_address = "tcp://" + ml_server_ip + ":" + std::to_string(toml::find<int>(config, "ml", "yolov3", "port"));
 
+    std::string host_server_ip = "127.0.0.1";
+    if (const char* e = std::getenv("HOST_SERVER_IP")) host_server_ip = e;
+    influxdb_cpp::server_info server_info(host_server_ip, 8086, "org", "token", "bucket");
+
     gst_init(&argc, &argv);
 
     int device_index = 0;
@@ -477,6 +516,7 @@ int main(int argc, char** argv)
 
     for (auto& t : toml::find<std::vector<toml::table>>(config, "video", "cameras"))
     {
+        auto id = toml::get<std::string>(t.at("id"));
         auto loc = toml::get<std::string>(t.at("location"));
         auto model = toml::get<std::string>(t.at("model"));
 
@@ -486,8 +526,13 @@ int main(int argc, char** argv)
 
         if (model == "bcc")
         {
-            ml = std::make_shared<rtsp_ml<app2queue_bcc, hw_config_u30>>(loc, device_index++);
-            ml->start();
+            auto bcc = std::make_shared<rtsp_ml<app2queue_bcc, hw_config_u30>>(loc, device_index++);
+            bcc->start();
+
+            if (server_info.host_found)
+                bcc->a2q->metrics_client = std::make_shared<metrics_client_influx_db>(id, server_info);
+
+            ml = bcc;
         }
         else if (model == "yolov3")
         {
@@ -497,8 +542,13 @@ int main(int argc, char** argv)
             std::vector<int> labels = toml::get<std::vector<int>>(t.at("labels"));
             yolo->a2q->set_detect_label_ids(labels);
 
+            if (server_info.host_found)
+                yolo->a2q->metrics_client = std::make_shared<metrics_client_influx_db>(id, server_info);
+
             ml = yolo;
         }
+
+
         queues.push_back(ml->queue);
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }

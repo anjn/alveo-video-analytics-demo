@@ -12,6 +12,8 @@ until [[ $upsec -gt 90 ]] ; do
     sleep 2
 done
 
+docker-compose up -d
+
 if [[ -z $HOST_SERVER_IP ]] ; then
     HOST_SERVER_IP=$(ip route get 1.2.3.4 | head -n 1 | awk '{print $7}')
 fi
@@ -29,7 +31,7 @@ tmux split-window -fv
 tmux send "$dir/docker/enter.sh --name demo-ml ./start_rtsp.sh" ENTER
 
 tmux split-window -fv
-tmux send "$dir/docker/run.sh --name demo-video --port 8555 --env ML_SERVER_IP=$ip_ml,RTSP_SERVER_IP=$ip_ml --card u30 ./start_demo.sh" ENTER
+tmux send "$dir/docker/run.sh --name demo-video --port 8555 --env ML_SERVER_IP=$ip_ml,RTSP_SERVER_IP=$ip_ml,HOST_SERVER_IP=$HOST_SERVER_IP --card u30 ./start_demo.sh" ENTER
 
 tmux a
 

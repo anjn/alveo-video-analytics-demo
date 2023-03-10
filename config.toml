@@ -1,16 +1,16 @@
 [video]
 cameras = [
-    { location = "rtsp://RTSP_SERVER_IP:8554/test0a", model = "yolov3", labels = [ 14 ] },
-    { location = "rtsp://RTSP_SERVER_IP:8554/test05", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
-    { location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "bcc" },
-    { location = "rtsp://RTSP_SERVER_IP:8554/test01", model = "bcc" },
-    { location = "rtsp://RTSP_SERVER_IP:8554/test02", model = "bcc" },
-    { location = "rtsp://RTSP_SERVER_IP:8554/test03", model = "bcc" },
-    { location = "rtsp://RTSP_SERVER_IP:8554/test04", model = "bcc" },
-    { location = "rtsp://RTSP_SERVER_IP:8554/test06", model = "bcc" },
-    { location = "rtsp://RTSP_SERVER_IP:8554/test07", model = "bcc" },
-    { location = "rtsp://RTSP_SERVER_IP:8554/test08", model = "bcc" },
-    { location = "rtsp://RTSP_SERVER_IP:8554/test09", model = "bcc" },
+    { id="0a", location = "rtsp://RTSP_SERVER_IP:8554/test0a", model = "yolov3", labels = [ 14 ] },
+    { id="05", location = "rtsp://RTSP_SERVER_IP:8554/test05", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
+    { id="00", location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "bcc" },
+    { id="01", location = "rtsp://RTSP_SERVER_IP:8554/test01", model = "bcc" },
+    { id="02", location = "rtsp://RTSP_SERVER_IP:8554/test02", model = "bcc" },
+    { id="03", location = "rtsp://RTSP_SERVER_IP:8554/test03", model = "bcc" },
+    { id="04", location = "rtsp://RTSP_SERVER_IP:8554/test04", model = "bcc" },
+    { id="06", location = "rtsp://RTSP_SERVER_IP:8554/test06", model = "bcc" },
+    { id="07", location = "rtsp://RTSP_SERVER_IP:8554/test07", model = "bcc" },
+    { id="08", location = "rtsp://RTSP_SERVER_IP:8554/test08", model = "bcc" },
+    { id="09", location = "rtsp://RTSP_SERVER_IP:8554/test09", model = "bcc" },
 ]
 
 device-index = -1

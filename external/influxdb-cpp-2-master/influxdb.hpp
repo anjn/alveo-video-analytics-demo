@@ -49,6 +49,7 @@ namespace influxdb_cpp {
         std::string bkt_;
         std::string tkn_;
         struct addrinfo hints_, *res_=NULL;
+        bool host_found;
         server_info(const std::string& host, int port, const std::string& org, const std::string& token, const std::string& bucket = "") {
             port_ = port;
             org_  = org;
@@ -86,7 +87,9 @@ namespace influxdb_cpp {
                 std::cerr << "Host not found --> " << gai_strerror(resp) << std::endl;
                 if (resp == EAI_SYSTEM)
                     std::cerr << "getaddrinfo() failed" << std::endl;
-                exit(1);
+                host_found = false;
+            } else {
+                host_found = true;
             }
 
         }
@@ -241,7 +244,7 @@ namespace influxdb_cpp {
             // open the socket
             sock = socket(si.res_->ai_family, si.res_->ai_socktype, si.res_->ai_protocol);
             if (sock < 0) {
-                std::cerr << "socket() failed" << std::endl;
+                //std::cerr << "socket() failed" << std::endl;
                 closesocket(sock);
                 return(1);
             }
@@ -252,9 +255,9 @@ namespace influxdb_cpp {
             ret_code = connect(sock, si.res_->ai_addr, si.res_->ai_addrlen);
             if (ret_code < 0)
             {
-                std::cerr << "connect() failed" << std::endl;
+                //std::cerr << "connect() failed" << std::endl;
                 closesocket(sock);
-                exit(1);
+                return(1);
             }
 
 
