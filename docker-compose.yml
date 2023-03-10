@@ -4,8 +4,6 @@ services:
   influxdb:
     image: influxdb:2.6.1
     container_name: demo-db
-    volumes:
-      - .:/workspace/demo
     ports:
       - 8086:8086
     environment:
@@ -17,3 +15,10 @@ services:
       - DOCKER_INFLUXDB_INIT_RETENTION=1h
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_ADMIN_TOKEN}
 
+  grafana:
+    image: grafana/grafana
+    container_name: demo-dashboard
+    ports:
+      - 3000:3000
+    volumes:
+      - ./docker/grafana/grafana.ini:/etc/grafana/grafana.ini
