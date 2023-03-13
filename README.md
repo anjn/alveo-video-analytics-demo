@@ -72,7 +72,7 @@ cameras = [
 $ ./start.sh
 ```
 
-This demo uses [rtsp-simple-server](https://github.com/aler9/rtsp-simple-server) for streaming output. You can see the video in the following ways.
+This demo uses [MediaMTX](https://github.com/aler9/rtsp-simple-server) for streaming output. You can see the video in the following ways.
 
 - Open RTSP (`rtsp://YOUR_SERVER_IP:8554/test`) using VLC.
 - Open HLS (`http://YOUR_SERVER_IP:8888/test`) using web browser.
