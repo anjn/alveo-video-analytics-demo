@@ -53,17 +53,17 @@ Video clips in `videos` directory will be streamed at `rtsp://YOUR_SERVER_IP:855
 
 ### Add cameras
 
-Modify camera list in `config.toml` according to your prepared video clips or live cameras. You can choose `bcc` (crowd counting model) or `yolov3` (object detection model) for each camera. `RTSP_SERVER_IP` in `config.toml` will be automatically replaced with the actual docker container's IP at runtime.
+Modify camera list in `config.toml` according to your prepared video clips or live cameras. You can choose an AI model from `bcc` (crowd counting model) or `yolov3` (object detection model) for each camera. `RTSP_SERVER_IP` in `config.toml` will be automatically replaced with the actual docker container's IP at runtime. `id` is used for pushing result to time-series database and should be non-empty identical string assigned for each camera.
 
 ```toml
 [video]
 cameras = [
     # YOLOv3 person detection
-    { location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "yolov3", labels = [ 14 ] },
+    { id = "00, location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "yolov3", labels = [ 14 ] },
     # YOLOv3 bicyle/bus/car/motorbike detection
-    { location = "rtsp://RTSP_SERVER_IP:8554/test01", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
+    { id = "01, location = "rtsp://RTSP_SERVER_IP:8554/test01", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
     # Crowd counting
-    { location = "rtsp://RTSP_SERVER_IP:8554/test02", model = "bcc" },
+    { id = "02, location = "rtsp://RTSP_SERVER_IP:8554/test02", model = "bcc" },
 ```
 
 ## Run demo
@@ -72,7 +72,7 @@ cameras = [
 $ ./start.sh
 ```
 
-This demo uses [rtsp-simple-server](https://github.com/aler9/rtsp-simple-server) for streaming output. You can see the video in the following ways.
+This demo uses [MediaMTX](https://github.com/aler9/rtsp-simple-server) for streaming output. You can see the video in the following ways.
 
 - Open RTSP (`rtsp://YOUR_SERVER_IP:8554/test`) using VLC.
 - Open HLS (`http://YOUR_SERVER_IP:8888/test`) using web browser.
