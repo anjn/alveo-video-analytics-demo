@@ -19,7 +19,7 @@ $ sudo reboot
 
 ### Install utilities
 ```bash
-$ sudo apt install -y curl git tmux htop
+$ sudo apt install -y curl git tmux htop jq
 ```
 
 ### Downgrade Linux kernel from 5.15 to 5.11

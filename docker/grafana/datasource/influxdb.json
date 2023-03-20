@@ -1,0 +1,20 @@
+{
+  "name": "InfluxDB",
+  "type": "influxdb",
+  "access": "proxy",
+  "url": "http://%HOST_SERVER_IP%:8086",
+  "user": "",
+  "database": "",
+  "basicAuth": false,
+  "isDefault": true,
+  "jsonData": {
+    "organization": "org",
+    "defaultBucket": "bucket",
+    "httpMode": "POST",
+    "version": "Flux"
+  },
+  "secureJsonData": {
+    "token": "token"
+  },
+  "readOnly": false
+}

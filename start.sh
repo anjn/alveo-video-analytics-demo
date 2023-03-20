@@ -23,6 +23,7 @@ tmux select-layout even-horizontal
 
 ip_ml=
 until [[ -n $ip_ml ]] ; do
+    echo Waiting for ML container up
     sleep 1
     ip_ml=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' demo-ml || true)
 done
@@ -32,6 +33,38 @@ tmux send "$dir/docker/enter.sh --name demo-ml ./start_rtsp.sh" ENTER
 
 tmux split-window -fv
 tmux send "$dir/docker/run.sh --name demo-video --port 8555 --env ML_SERVER_IP=$ip_ml,RTSP_SERVER_IP=$ip_ml,HOST_SERVER_IP=$HOST_SERVER_IP --card u30 ./start_demo.sh" ENTER
+
+# Wait Grafana up
+echo Waiting for Grafana up
+until nc -z localhost 3000 ; do
+    sleep 1
+done
+sleep 5
+
+if [[ -z $(which jq) ]] ; then
+    set -x
+    sudo apt install -y jq
+    set +x
+fi
+
+# Add influxdb datasource to Grafana
+curl \
+    "http://localhost:3000/api/datasources" \
+    -X POST \
+    -H "Content-Type: application/json" \
+    --user admin:admin \
+    --data-binary @<(sed "s/%HOST_SERVER_IP%/$HOST_SERVER_IP/" ./docker/grafana/datasource/influxdb.json)
+
+# Get datasource uid
+DS_UID=$(curl -s "http://localhost:3000/api/datasources" -u admin:admin | jq -r ".[0].uid")
+
+# Add dashboard
+curl \
+    "http://localhost:3000/api/dashboards/db" \
+    -X POST \
+    -H "Content-Type: application/json" \
+    --user admin:admin \
+    --data-binary @<(sed "s/%HOST_SERVER_IP%/$HOST_SERVER_IP/" ./docker/grafana/dashboard.json | sed "s/%DS_UID%/$DS_UID/")
 
 tmux a
 
