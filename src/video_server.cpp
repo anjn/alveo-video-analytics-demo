@@ -49,6 +49,11 @@ struct metrics_client_influx_db
             .field("value", count)
             .post_http(server_info);
     }
+
+    std::string get_id() const
+    {
+        return id;
+    }
 };
 
 struct app2queue_bcc : app2queue
@@ -107,6 +112,13 @@ struct app2queue_bcc : app2queue
         // Draw text
         cv::putText(mat, std::to_string(int(count)), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(0, 0, 0), 14);
         cv::putText(mat, std::to_string(int(count)), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(60, 240, 60), 6);
+
+        if (metrics_client)
+        {
+            auto id = metrics_client->get_id();
+            cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(0, 0, 0), 14);
+            cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(255, 255, 255), 6);
+        }
     }
 };
 
@@ -290,6 +302,13 @@ struct app2queue_yolov3 : app2queue
         // Draw text
         cv::putText(mat, std::to_string(detections.size()), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(0, 0, 0), 14);
         cv::putText(mat, std::to_string(detections.size()), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(60, 240, 60), 6);
+
+        if (metrics_client)
+        {
+            auto id = metrics_client->get_id();
+            cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(0, 0, 0), 14);
+            cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(255, 255, 255), 6);
+        }
     }
 };
 
