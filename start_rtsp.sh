@@ -30,7 +30,7 @@ for i in $(seq 0 $((num_videos-1))) ; do
     rtsp=rtsp://localhost:$port/$name
     v=${videos[i%num_videos]}
     echo "Info: Start streaming [$rtsp] $v"
-    ffmpeg -re -stream_loop -1 -i "$v" -c copy -bsf:v 'filter_units=pass_types=1-5' -f rtsp $rtsp &> /dev/null &
+    ffmpeg -re -stream_loop -1 -i "$v" -c copy -bsf:v 'filter_units=pass_types=1-5' -f rtsp -rtsp_transport tcp $rtsp &> /dev/null &
     sleep 0.2
 done
 

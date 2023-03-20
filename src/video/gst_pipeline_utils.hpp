@@ -83,7 +83,8 @@ struct rtspclientsink
         assert(sink);
         g_object_set(G_OBJECT(sink),
                      "location", location.c_str(),
-                     "latency", 2000,
+                     "latency", 500,
+                     "protocols", "tcp",
                      nullptr);
         gst_object_unref(sink);
     }
