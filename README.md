@@ -78,6 +78,10 @@ This demo uses [MediaMTX](https://github.com/aler9/rtsp-simple-server) for strea
 - Open HLS (`http://YOUR_SERVER_IP:8888/test`) using web browser.
 - Open WebRTC (`http://YOUR_SERVER_IP:8889/test`) using web browser.
 
+Grafana dashboard is also available at `http://YOUR_SERVER_IP:3000`. Open a dashboard named `Crowd Monitor Demo` in `General`.
+
+![](images/dashboard.jpg)
+
 ## Stop demo
 
 ```bash
