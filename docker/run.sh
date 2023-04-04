@@ -6,10 +6,12 @@ if [[ $? -ne 0 ]]; then
     exit 1;
 fi
 
-tag="u30-u5x"
+dir=$(dirname $(readlink -f $0))
+source $dir/env.sh
+
 name=demo-video
 port=
-card="u30|u5[05]"
+card="v70"
 
 eval set -- "$VALID_ARGS"
 while [ : ]; do
@@ -33,15 +35,15 @@ done
 
 command=/bin/bash
 if [[ $# -gt 0 ]] ; then
-    command="$*"
+    command="$@"
 fi
 
 prj_dir=$(dirname $(dirname $(readlink -f $0)))
 
 if [[ -n $card ]] ; then
     # Find device
-    cmd=scan # for older xrt
-    #cmd=examine
+    #cmd=scan # for older xrt
+    cmd=examine
 
     retry=10
 

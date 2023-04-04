@@ -2,6 +2,8 @@
 
 dir=$(dirname $(readlink -f $0))
 
+source $dir/env.sh
+
 opts=
 
 #PROXY=http://192.168.1.200:3128
@@ -14,4 +16,4 @@ if [[ -n $PROXY ]] ; then
 fi
 
 cd $dir
-docker buildx build $opts -t anjn/alveo-video-analytics-demo:u30-u5x .
+docker buildx build $opts -t anjn/alveo-video-analytics-demo:$tag .
