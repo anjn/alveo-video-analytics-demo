@@ -8,3 +8,4 @@
 *.ts
 /docker/packages
 /docker/models
+/build

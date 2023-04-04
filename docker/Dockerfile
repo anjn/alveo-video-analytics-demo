@@ -58,7 +58,7 @@ WORKDIR /workspace
 
 # protobuf
 RUN --mount=type=cache,target=/root/downloads \
-    VERSION=3.19.4 \
+    VERSION=3.6.1 \
     && URL=https://github.com/protocolbuffers/protobuf/releases/download/v${VERSION}/protobuf-cpp-${VERSION}.tar.gz \
     && FILE=protobuf-cpp-${VERSION}.tar.gz \
     && CACHE=/root/downloads/$FILE \
@@ -289,4 +289,8 @@ RUN --mount=type=cache,target=/var/lib/apt/lists \
 # COPY files/yolov3_conf_threshold.patch /tmp
 # RUN patch /usr/share/vitis_ai_library/models/u55c-u50lv-DPUCAHX8H-DWC/yolov3_voc_tf/yolov3_voc_tf.prototxt < /tmp/yolov3_conf_threshold.patch
 
+COPY files/entrypoint.sh /
+
 WORKDIR /workspace/demo
+
+ENTRYPOINT ["/entrypoint.sh"]

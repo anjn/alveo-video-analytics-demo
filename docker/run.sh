@@ -99,6 +99,7 @@ docker run \
     $xclmgmt $xocl \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e DISPLAY=$DISPLAY \
+    -e USER=$USER \
     -e QT_X11_NO_MITSHM=1 \
     -v $prj_dir:/workspace/demo \
     $opts \
