@@ -16,10 +16,10 @@
 template<typename Adapter>
 class inf_client
 {
-    using request_t = Adapter::request_t;
-    using result_t = Adapter::result_t;
-    using request_message_t = Adapter::request_message_t;
-    using result_message_t = Adapter::result_message_t;
+    using request_t = typename Adapter::request_t;
+    using result_t = typename Adapter::result_t;
+    using request_message_t = typename Adapter::request_message_t;
+    using result_message_t = typename Adapter::result_message_t;
 
     zmq::context_t zmq_context;
     zmq::socket_t socket;

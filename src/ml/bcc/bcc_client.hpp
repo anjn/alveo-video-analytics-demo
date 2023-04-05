@@ -48,10 +48,17 @@ struct bcc_message_adapter
                 double v = result.map[y * result.map_w + x] / 127.0;
                 double va = pow(v, 0.4);
                 cv::Vec4b p;
-                p[0] = 255;
-                p[1] = std::min(255, (int)(v * 250));
-                p[2] = 0;
-                p[3] = std::min(255, (int)(va * 224));
+                // RGBA
+                //p[0] = 255;
+                //p[1] = std::min(255, (int)(v * 250));
+                //p[2] = 0;
+                //p[3] = std::min(255, (int)(va * 224));
+
+                // ABGR
+                p[0] = std::min(255, (int)(va * 224));
+                p[1] = 0;
+                p[2] = std::min(255, (int)(v * 250));
+                p[3] = 255;
 
                 heatmap.at<cv::Vec4b>(y, x) = p;
             }

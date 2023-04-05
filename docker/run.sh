@@ -97,6 +97,7 @@ docker run \
     -it \
     --name $name \
     $xclmgmt $xocl \
+    --shm-size=4g \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e DISPLAY=$DISPLAY \
     -e USER=$USER \

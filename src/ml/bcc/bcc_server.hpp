@@ -80,7 +80,8 @@ struct bcc_model
                 for (int x = 0; x < w; x++) {
                     for (int c = 0; c < 3; c++) {
                         ibp[batch_offset + ((y + offset_y[i]) * in_shape.width + (x + offset_x[i])) * 3 + c] =
-                            int(roundf((r.image[y * s + x * n + (2 - c)] - mean[c]) * in->scale * scale[c]));
+                            //int(roundf((r.image[y * s + x * n + (2 - c)] - mean[c]) * in->scale * scale[c])); // BGRA
+                            int(roundf((r.image[y * s + x * n + (3 - c)] - mean[c]) * in->scale * scale[c])); // ABGR?
                     }
                 }
             }

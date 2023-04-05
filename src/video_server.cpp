@@ -16,7 +16,7 @@
 #include "video/rtsp_server.hpp"
 #include "video/gst_app_utils.hpp"
 #include "video/gst_pipeline_utils.hpp"
-#include "video/hw_config_u30.hpp"
+#include "video/hw_config_v70.hpp"
 #include "ml/bcc/bcc_client.hpp"
 #include "ml/yolov3/yolov3_client.hpp"
 #include "utils/queue_mt.hpp"
@@ -101,8 +101,8 @@ struct app2queue_bcc : app2queue
                 for (int x = 0; x < mat.cols; x++) {
                     auto& p = mat.at<cv::Vec4b>(y, x);
                     auto& ph = heatmap.at<cv::Vec4b>(y / 8 , x / 8);
-                    float pa = ph[3] / 255.0;
-                    for (int c = 0; c < 3; c++) {
+                    float pa = ph[0] / 255.0;
+                    for (int c = 1; c < 4; c++) {
                         p[c] = p[c] * (1 - pa) + ph[c] * pa;
                     }
                 }
@@ -110,14 +110,14 @@ struct app2queue_bcc : app2queue
         }
 
         // Draw text
-        cv::putText(mat, std::to_string(int(count)), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(0, 0, 0), 14);
-        cv::putText(mat, std::to_string(int(count)), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(60, 240, 60), 6);
+        cv::putText(mat, std::to_string(int(count)), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(255, 0, 0, 0), 14);
+        cv::putText(mat, std::to_string(int(count)), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(255, 60, 240, 60), 6);
 
         if (metrics_client)
         {
             auto id = metrics_client->get_id();
-            cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(0, 0, 0), 14);
-            cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(255, 255, 255), 6);
+            cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(255, 0, 0, 0), 14);
+            cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(255, 255, 255, 255), 6);
         }
     }
 };
@@ -174,15 +174,25 @@ struct app2queue_yolov3 : app2queue
         client(yolov3_server_address, result_queue)
     {
         // BGR order
-        color_palette.push_back(cv::Scalar(0xcb, 0x5d, 0xf5));
-        color_palette.push_back(cv::Scalar(0xff, 0x86, 0x63));
-        color_palette.push_back(cv::Scalar(0x88, 0xe6, 0x49));
-        color_palette.push_back(cv::Scalar(0x38, 0xce, 0xdc));
-        color_palette.push_back(cv::Scalar(0x49, 0x82, 0xf5));
-        color_palette.push_back(cv::Scalar(0x2f, 0x4a, 0xf0));
-        color_palette.push_back(cv::Scalar(0x9c, 0x33, 0xf0));
-        color_palette.push_back(cv::Scalar(0xf0, 0x2a, 0x34));
-        color_palette.push_back(cv::Scalar(0xcf, 0xb0, 0xb0));
+        //color_palette.push_back(cv::Scalar(0xcb, 0x5d, 0xf5));
+        //color_palette.push_back(cv::Scalar(0xff, 0x86, 0x63));
+        //color_palette.push_back(cv::Scalar(0x88, 0xe6, 0x49));
+        //color_palette.push_back(cv::Scalar(0x38, 0xce, 0xdc));
+        //color_palette.push_back(cv::Scalar(0x49, 0x82, 0xf5));
+        //color_palette.push_back(cv::Scalar(0x2f, 0x4a, 0xf0));
+        //color_palette.push_back(cv::Scalar(0x9c, 0x33, 0xf0));
+        //color_palette.push_back(cv::Scalar(0xf0, 0x2a, 0x34));
+        //color_palette.push_back(cv::Scalar(0xcf, 0xb0, 0xb0));
+        // ARGB order
+        color_palette.push_back(cv::Scalar(0xff, 0x5d, 0xf5, 0xcb));
+        color_palette.push_back(cv::Scalar(0xff, 0x86, 0x63, 0xff));
+        color_palette.push_back(cv::Scalar(0xff, 0xe6, 0x49, 0x88));
+        color_palette.push_back(cv::Scalar(0xff, 0xce, 0xdc, 0x38));
+        color_palette.push_back(cv::Scalar(0xff, 0x82, 0xf5, 0x49));
+        color_palette.push_back(cv::Scalar(0xff, 0x4a, 0xf0, 0x2f));
+        color_palette.push_back(cv::Scalar(0xff, 0x33, 0xf0, 0x9c));
+        color_palette.push_back(cv::Scalar(0xff, 0x2a, 0x34, 0xf0));
+        color_palette.push_back(cv::Scalar(0xff, 0xb0, 0xb0, 0xcf));
     }
 
     // 1,  bicycle
@@ -295,19 +305,19 @@ struct app2queue_yolov3 : app2queue
             int baseline = 0;
             cv::Size text = cv::getTextSize(std::to_string(det.count), cv::FONT_HERSHEY_DUPLEX, fs, thickness, &baseline);
             cv::rectangle(mat, cv::Point(r.x(), ty + 3) + cv::Point(0, baseline), cv::Point(tx, ty) + cv::Point(text.width + 3, -text.height - 3), color, cv::FILLED, 1);
-            cv::putText(mat, std::to_string(det.count), cv::Point(tx, ty + 2), cv::FONT_HERSHEY_DUPLEX, fs, cv::Scalar(240, 240, 240), thickness);
+            cv::putText(mat, std::to_string(det.count), cv::Point(tx, ty + 2), cv::FONT_HERSHEY_DUPLEX, fs, cv::Scalar(255, 240, 240, 240), thickness);
             ty += th + 6;
         }
 
         // Draw text
-        cv::putText(mat, std::to_string(detections.size()), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(0, 0, 0), 14);
-        cv::putText(mat, std::to_string(detections.size()), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(60, 240, 60), 6);
+        cv::putText(mat, std::to_string(detections.size()), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(255, 0, 0, 0), 14);
+        cv::putText(mat, std::to_string(detections.size()), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(255, 60, 240, 60), 6);
 
         if (metrics_client)
         {
             auto id = metrics_client->get_id();
-            cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(0, 0, 0), 14);
-            cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(255, 255, 255), 6);
+            cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(255, 0, 0, 0), 14);
+            cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(255, 255, 255, 255), 6);
         }
     }
 };
@@ -500,11 +510,11 @@ struct rtsp_ml : rtsp_ml_base<HwConfig>
 int main(int argc, char** argv)
 {
     arg_begin("", 0, 0);
-    arg_i(max_devices, 2, "Num available devices");
+    //arg_i(max_devices, 2, "Num available devices");
     arg_end;
 
     // HW config
-    hw_config_u30::max_devices = max_devices;
+    //hw_config_v70::max_devices = max_devices;
 
     // Load config
     const auto config = toml::parse("config.toml");
@@ -531,7 +541,7 @@ int main(int argc, char** argv)
     int device_index = 0;
 
     std::vector<app2queue::queue_ptr_t> queues;
-    std::vector<std::shared_ptr<rtsp_ml_base<hw_config_u30>>> ml_pipelines;
+    std::vector<std::shared_ptr<rtsp_ml_base<hw_config_v70>>> ml_pipelines;
 
     for (auto& t : toml::find<std::vector<toml::table>>(config, "video", "cameras"))
     {
@@ -545,7 +555,7 @@ int main(int argc, char** argv)
 
         if (model == "bcc")
         {
-            auto bcc = std::make_shared<rtsp_ml<app2queue_bcc, hw_config_u30>>(loc, device_index++);
+            auto bcc = std::make_shared<rtsp_ml<app2queue_bcc, hw_config_v70>>(loc, device_index++);
             bcc->start();
 
             if (server_info.host_found)
@@ -555,7 +565,7 @@ int main(int argc, char** argv)
         }
         else if (model == "yolov3")
         {
-            auto yolo = std::make_shared<rtsp_ml<app2queue_yolov3, hw_config_u30>>(loc, device_index++);
+            auto yolo = std::make_shared<rtsp_ml<app2queue_yolov3, hw_config_v70>>(loc, device_index++);
             yolo->start();
 
             std::vector<int> labels = toml::get<std::vector<int>>(t.at("labels"));
@@ -575,8 +585,9 @@ int main(int argc, char** argv)
     // Output pipeline
     appsrc src;
 
-    vvas_enc<hw_config_u30> enc(device_index);
-    enc.bitrate = output_bitrate;
+    //vvas_enc<hw_config_v70> enc(device_index);
+    //enc.bitrate = output_bitrate;
+    x264enc enc;
 
     std::cout << rtsp_server_location << std::endl;
     rtspclientsink sink(rtsp_server_location);

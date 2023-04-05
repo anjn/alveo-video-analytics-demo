@@ -15,9 +15,9 @@
 int main(int argc, char** argv)
 {
     arg_begin("", 0, 0);
-    arg_s(xmodel, "/usr/share/vitis_ai_library/models/u55c-u50lv-DPUCAHX8H-DWC/yolov3_voc_tf/yolov3_voc_tf.xmodel", "Path of xmodel file");
-    arg_s(image, "/workspace/Vitis-AI/examples/Vitis-AI-Library/samples/yolov3/sample_yolov3.jpg", "Test image");
-    arg_i(batch, 3, "");
+    arg_s(xmodel, "/usr/share/vitis_ai_library/models/yolov3_voc_tf/yolov3_voc_tf.xmodel", "Path of xmodel file");
+    arg_s(image, "/workspace/demo/samples/The_million_march_man.jpg", "Test image");
+    arg_i(batch, 14, "");
     arg_end;
 
     auto yolo = vitis::ai::YOLOv3::create(xmodel);
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
             float confidence = box.score;
             if (confidence >= 0.8)
             {
-                std::cout << "RESULT: " << label << "\t" << xmin << "\t" << ymin << "\t"
+                std::cout << "RESULT: " << i << "\t" << label << "\t" << xmin << "\t" << ymin << "\t"
                     << (xmax - xmin) << "\t" << (ymax - ymin) << "\t" << confidence << "\n";
             }
         }

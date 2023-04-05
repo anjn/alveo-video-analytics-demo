@@ -261,7 +261,8 @@ RUN --mount=type=cache,target=/var/lib/apt/lists \
         gstreamer1.0-rtsp \
         gstreamer1.0-plugins-ugly \
         netcat \
-        iputils-ping
+        iputils-ping \
+        libunwind-dev
 
 # rtsp-simple-server
 RUN --mount=type=cache,target=/root/downloads \

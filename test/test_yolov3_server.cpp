@@ -19,8 +19,8 @@
 int main(int argc, char** argv)
 {
     arg_begin("", 0, 0);
-    arg_s(xmodel, "/usr/share/vitis_ai_library/models/u55c-u50lv-DPUCAHX8H-DWC/yolov3_voc_tf/yolov3_voc_tf.xmodel", "Path of xmodel file");
-    arg_s(image, "/workspace/Vitis-AI/examples/Vitis-AI-Library/samples/yolov3/sample_yolov3.jpg", "Test image");
+    arg_s(xmodel, "/usr/share/vitis_ai_library/models/yolov3_voc_tf/yolov3_voc_tf.xmodel", "Path of xmodel file");
+    arg_s(image, "/workspace/demo/samples/The_million_march_man.jpg", "Test image");
     arg_end;
 
     // yolov3

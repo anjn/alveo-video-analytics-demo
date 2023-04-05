@@ -90,35 +90,35 @@ struct rtspclientsink
     }
 };
 
-//struct multifilesrc
-//{
-//    const std::string location;
-//
-//    const std::string src_name;
-//
-//    multifilesrc(
-//        const std::string& location_
-//    ) : 
-//        location(location_),
-//        src_name(get_new_name("src"))
-//    {}
-//
-//    std::string get_description()
-//    {
-//        return
-//            " multifilesrc name=" + src_name +
-//            " ! h264parse"
-//            ;
-//    }
-//
-//    void set_params(GstElement* pipeline)
-//    {
-//        auto src = gst_bin_get_by_name(GST_BIN(pipeline), src_name.c_str());
-//        assert(src);
-//        g_object_set(G_OBJECT(src), "location", location.c_str(), nullptr);
-//        gst_object_unref(src);
-//    }
-//};
+struct multifilesrc
+{
+    const std::string location;
+
+    const std::string src_name;
+
+    multifilesrc(
+        const std::string& location_
+    ) : 
+        location(location_),
+        src_name(get_new_name("src"))
+    {}
+
+    std::string get_description()
+    {
+        return
+            " multifilesrc name=" + src_name +
+            " ! h264parse"
+            ;
+    }
+
+    void set_params(GstElement* pipeline)
+    {
+        auto src = gst_bin_get_by_name(GST_BIN(pipeline), src_name.c_str());
+        assert(src);
+        g_object_set(G_OBJECT(src), "location", location.c_str(), nullptr);
+        gst_object_unref(src);
+    }
+};
 
 struct videotestsrc
 {
@@ -227,7 +227,7 @@ struct vvas_dec
     std::string get_description()
     {
         return
-            " vvas_xvcudec name=" + dec_name
+            " " + HwConfig::decoder_element_name + " name=" + dec_name
             ;
     }
 

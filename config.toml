@@ -1,44 +1,62 @@
 [video]
 cameras = [
-    { id="0a", location = "rtsp://RTSP_SERVER_IP:8554/test0a", model = "yolov3", labels = [ 14 ] },
-    { id="05", location = "rtsp://RTSP_SERVER_IP:8554/test05", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
+#    { id="00", location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "yolov3", labels = [ 14 ] },
+    { id="01", location = "rtsp://RTSP_SERVER_IP:8554/test01", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
     { id="00", location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "bcc" },
-    { id="01", location = "rtsp://RTSP_SERVER_IP:8554/test01", model = "bcc" },
     { id="02", location = "rtsp://RTSP_SERVER_IP:8554/test02", model = "bcc" },
     { id="03", location = "rtsp://RTSP_SERVER_IP:8554/test03", model = "bcc" },
-    { id="04", location = "rtsp://RTSP_SERVER_IP:8554/test04", model = "bcc" },
+#    { id="04", location = "rtsp://RTSP_SERVER_IP:8554/test04", model = "bcc" },
     { id="06", location = "rtsp://RTSP_SERVER_IP:8554/test06", model = "bcc" },
     { id="07", location = "rtsp://RTSP_SERVER_IP:8554/test07", model = "bcc" },
     { id="08", location = "rtsp://RTSP_SERVER_IP:8554/test08", model = "bcc" },
     { id="09", location = "rtsp://RTSP_SERVER_IP:8554/test09", model = "bcc" },
+    { id="10", location = "rtsp://RTSP_SERVER_IP:8554/test10", model = "bcc" },
+    { id="11", location = "rtsp://RTSP_SERVER_IP:8554/test11", model = "bcc" },
+    { id="12", location = "rtsp://RTSP_SERVER_IP:8554/test12", model = "bcc" },
+    { id="13", location = "rtsp://RTSP_SERVER_IP:8554/test13", model = "bcc" },
+    { id="14", location = "rtsp://RTSP_SERVER_IP:8554/test14", model = "bcc" },
+    { id="15", location = "rtsp://RTSP_SERVER_IP:8554/test15", model = "bcc" },
+    { id="16", location = "rtsp://RTSP_SERVER_IP:8554/test16", model = "bcc" },
+    { id="17", location = "rtsp://RTSP_SERVER_IP:8554/test17", model = "bcc" },
 ]
 
 device-index = -1
 
-focus-size = 2
+focus-size = 0
 focus-duration = 3
 
-#output-width = 1920
-#output-height = 1080
-#output-bitrate = 12000
+output-width = 1920
+output-height = 1080
+output-bitrate = 12000
 
-output-width = 3840
-output-height = 2160
-output-bitrate = 16000
+#output-width = 3840
+#output-height = 2160
+#output-bitrate = 16000
 
 rtsp-server-location = "rtsp://RTSP_SERVER_IP:8554/test"
 
 [ml.yolov3]
-xmodels = [ "/usr/share/vitis_ai_library/models/u55c-u50lv-DPUCAHX8H-DWC/yolov3_voc_tf/yolov3_voc_tf.xmodel" ]
+xmodels = [ "/usr/share/vitis_ai_library/models/yolov3_voc_tf/yolov3_voc_tf.xmodel" ]
 port = 5555
 max_batch_latency = 100
-max_batch_size = 3
+max_batch_size = 13
+num_workers = 3
+
+[ml.carclassification]
+xmodels = [
+    "/usr/share/vitis_ai_library/models/chen_color_resnet18_pt/chen_color_resnet18_pt.xmodel",
+    "/usr/share/vitis_ai_library/models/vehicle_make_resnet18_pt/vehicle_make_resnet18_pt.xmodel",
+    "/usr/share/vitis_ai_library/models/vehicle_type_resnet18_pt/vehicle_type_resnet18_pt.xmodel",
+]
+port = 5556
+max_batch_latency = 100
+max_batch_size = 13
 num_workers = 3
 
 [ml.bcc]
-xmodels = [ "/usr/share/vitis_ai_library/models/u55c-u50lv-DPUCAHX8H-DWC/bcc_pt/bcc_pt.xmodel" ]
-port = 5556
+xmodels = [ "/workspace/demo/docker/models/bcc/deploy.xmodel" ]
+port = 5557
 max_batch_latency = 100
-max_batch_size = 3
+max_batch_size = 13
 num_workers = 3
 

@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstdio>
+#include <opencv2/imgproc.hpp>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -38,7 +39,10 @@ int main(int argc, char** argv)
     auto server = std::make_shared<bcc_server>(conf);
     server->start(true);
 
-    cv::Mat img = cv::imread(image);
+    cv::Mat mat = cv::imread(image);
+
+    cv::Mat img;
+    cv::cvtColor(mat, img, cv::COLOR_BGR2BGRA);
 
     auto result_queue = bcc_client::create_result_queue();
     bcc_client client(conf.address, result_queue);
@@ -48,6 +52,21 @@ int main(int argc, char** argv)
 
     std::cout << "count: " << count << std::endl;
 
-    cv::imwrite("test.png", heatmap);
+    // Draw heatmap
+    for (int y = 0; y < img.rows; y++) {
+        for (int x = 0; x < img.cols; x++) {
+            auto& p = img.at<cv::Vec4b>(y, x);
+            auto& ph = heatmap.at<cv::Vec4b>(y / 8 , x / 8);
+            float pa = ph[3] / 255.0;
+            for (int c = 0; c < 3; c++) {
+                p[c] = p[c] * (1 - pa) + ph[c] * pa;
+            }
+        }
+    }
+
+    //cv::imwrite("test.png", heatmap);
+    cv::namedWindow("title", cv::WINDOW_NORMAL);
+    cv::imshow("title", img);
+    cv::waitKey();
 }
 

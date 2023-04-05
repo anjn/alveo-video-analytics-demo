@@ -25,7 +25,7 @@ else
 
     # Run docker
     cd $dir
-    ./docker/run.sh --card u30 --port 8554,8888,8889,8189/udp --env HOST_SERVER_IP=$HOST_SERVER_IP ./test/test_rtspclientsink.sh -- $*
+    ./docker/run.sh --card v70 --port 8554,8888,8889,8189/udp --env HOST_SERVER_IP=$HOST_SERVER_IP ./test/test_rtspclientsink.sh -- $*
 fi
 
 

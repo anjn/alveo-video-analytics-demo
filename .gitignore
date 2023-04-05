@@ -9,3 +9,6 @@
 /docker/packages
 /docker/models
 /build
+/compile_commands.json
+/samples
+/.cache

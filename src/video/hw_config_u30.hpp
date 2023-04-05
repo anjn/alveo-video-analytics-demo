@@ -11,7 +11,8 @@ extern "C" {
 
 struct hw_config_u30
 {
-    static inline int max_devices = 2;
+    inline static const std::string decoder_element_name = "vvas_xvcudec";
+    inline static int max_devices = 2;
 
     static void set_decoder_params(
         GstElement* elm,

@@ -11,6 +11,7 @@
 #include <arg/arg.h>
 
 #include "ml/bcc/bcc_server.hpp"
+#include "ml/carclassification/carclassification_server.hpp"
 #include "ml/yolov3/yolov3_server.hpp"
 
 template<typename T>
@@ -44,6 +45,9 @@ int main (int argc, char** argv)
     yolov3_server server0 { load_config(config_obj, "yolov3", max_batch_size) };
     server0.start(true);
 
-    bcc_server server1 { load_config(config_obj, "bcc", max_batch_size) };
-    server1.start();
+    carclassification_server server1 { load_config(config_obj, "carclassification", max_batch_size) };
+    server1.start(true);
+
+    bcc_server server2 { load_config(config_obj, "bcc", max_batch_size) };
+    server2.start();
 }
