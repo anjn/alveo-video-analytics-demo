@@ -47,7 +47,7 @@ static std::optional<cv::Mat> get_cvmat_from_appsink(GstAppSink* appsink, const 
 struct app2queue_bgr
 {
     using this_type = app2queue_bgr;
-    using queue_element_t = std::vector<cv::Mat>;
+    using queue_element_t = cv::Mat;
     using queue_t = queue_mt<queue_element_t>;
     using queue_ptr_t = std::shared_ptr<queue_t>;
 
@@ -77,7 +77,7 @@ struct app2queue_bgr
                 mat.push_back(get_cvmat_from_appsink(*appsink, size).value());
             }
             proc_buffer(mat);
-            queue->push(mat);
+            queue->push(mat[0]);
         }
     }
 

@@ -234,7 +234,7 @@ struct app2queue_yolov3 : app2queue_bgr
 
     yolov3_client::queue_t result_queue;
     std::vector<std::shared_ptr<yolov3_client>> clients;
-    //std::queue<T> buffer_queue;
+    std::queue<std::vector<cv::Mat>> buffer_queue;
 
     std::vector<mytracker> trackers;
 
@@ -281,20 +281,22 @@ struct app2queue_yolov3 : app2queue_bgr
 
     virtual void proc_buffer(std::vector<cv::Mat>& mats) override
     {
-        auto mat = mats[0];
-        //std::cout << "app2queue_yolov3::proc_buffer" << std::endl;
-
         // Request ML inference if clients are not busy
         for (auto& client: clients) {
             if (!client->is_busy()) {
-                client->request(mat.clone());
+                client->request(mats[2]); // 2 for infer
+                buffer_queue.push(mats);
             }
         }
 
         // Get ML inference result from queue
         while (result_queue->size() > 0)
         {
-            auto [result, img] = result_queue->pop();
+            auto result = result_queue->pop();
+            auto inferred_mats = buffer_queue.front();
+            buffer_queue.pop();
+            auto img = inferred_mats[1]; // 1 for crop
+
             yolov3_fps.count();
 
             //std::cout << "detections " << result.detections.size() << std::endl;
@@ -379,6 +381,8 @@ struct app2queue_yolov3 : app2queue_bgr
                 car_runner.request_queue.push(std::make_tuple(img, rect, det.track_id));
             }
         }
+
+        auto mat = mats[0]; // 0 for display
 
         for (auto& det : detections)
         {
@@ -514,7 +518,7 @@ struct compositor_bgr
         {
             if (queues[i]->size() > 0)
             {
-                auto buf = queues[i]->pop()[0];
+                auto buf = queues[i]->pop();
 
                 // Draw focus window
                 if (i == focus_camera && focus_size > 1) {
@@ -701,6 +705,11 @@ int main(int argc, char** argv)
     std::vector<cv::Size> bcc_sizes;
     bcc_sizes.push_back(cv::Size(960, 540));
 
+    std::vector<cv::Size> yolov3_sizes;
+    yolov3_sizes.push_back(cv::Size(1152, 648));  // for display, 1920*3/5 = 1152
+    yolov3_sizes.push_back(cv::Size(1920, 1080)); // for crop
+    yolov3_sizes.push_back(cv::Size(416, 234));   // for inference
+
     for (auto& t : toml::find<std::vector<toml::table>>(config, "video", "cameras"))
     {
         auto id = toml::get<std::string>(t.at("id"));
@@ -723,7 +732,7 @@ int main(int argc, char** argv)
         }
         else if (model == "yolov3")
         {
-            auto yolo = std::make_shared<rtsp_ml<app2queue_yolov3, hw_config_v70>>(loc, device_index++, bcc_sizes);
+            auto yolo = std::make_shared<rtsp_ml<app2queue_yolov3, hw_config_v70>>(loc, device_index++, yolov3_sizes);
             yolo->start();
 
             std::vector<int> labels = toml::get<std::vector<int>>(t.at("labels"));
