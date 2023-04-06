@@ -1,9 +1,9 @@
 [video]
 cameras = [
-    { id="12", location = "rtsp://RTSP_SERVER_IP:8554/test12", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
-    { id="00", location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "bcc" },
-#    { id="00", location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "yolov3", labels = [ 14 ] },
-#    { id="01", location = "rtsp://RTSP_SERVER_IP:8554/test01", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
+    #{ id="tp", location = "rtsp://tapo00:password@192.168.8.100:554/stream1",model = "yolov3", labels = [ 14 ] },
+    { id="00", location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "yolov3", labels = [ 14 ] },
+    { id="00", location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "yolov3", labels = [ 14 ] },
+    { id="01", location = "rtsp://RTSP_SERVER_IP:8554/test01", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
     { id="02", location = "rtsp://RTSP_SERVER_IP:8554/test02", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
     { id="03", location = "rtsp://RTSP_SERVER_IP:8554/test03", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
     { id="04", location = "rtsp://RTSP_SERVER_IP:8554/test04", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
@@ -17,7 +17,6 @@ cameras = [
     { id="0c", location = "rtsp://RTSP_SERVER_IP:8554/test0c", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
     { id="0d", location = "rtsp://RTSP_SERVER_IP:8554/test0d", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
     { id="0e", location = "rtsp://RTSP_SERVER_IP:8554/test0e", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
-    { id="0f", location = "rtsp://RTSP_SERVER_IP:8554/test0f", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
 ]
 
 device-index = -1
@@ -25,7 +24,7 @@ device-index = -1
 focus-size = 3
 focus-duration = 3
 
-output-rtsp = 0
+output-rtsp = 1
 
 output-width = 1920
 output-height = 1080
@@ -42,7 +41,7 @@ xmodels = [ "/usr/share/vitis_ai_library/models/yolov3_voc_tf/yolov3_voc_tf.xmod
 port = 5555
 max_batch_latency = 100
 max_batch_size = 13
-num_workers = 3
+num_workers = 2
 
 [ml.carclassification]
 xmodels = [
@@ -60,5 +59,5 @@ xmodels = [ "/workspace/demo/docker/models/bcc/deploy.xmodel" ]
 port = 5557
 max_batch_latency = 100
 max_batch_size = 13
-num_workers = 3
+num_workers = 2
 

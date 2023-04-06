@@ -4,8 +4,8 @@ dir=$(dirname $(readlink -f $0))
 set -x
 
 opts=
-opts+=" -ss 30"
-opts+=" -t 60" # limit to 2min duration
+#opts+=" -ss 30"
+#opts+=" -t 60" # limit to 2min duration
 
 maxrate=4.0M
 bufsize=8.0M

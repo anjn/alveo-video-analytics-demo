@@ -26,7 +26,7 @@ struct yolov3_model
 
     std::vector<result_t> run(const std::vector<request_t>& requests)
     {
-        std::cout << "yolov3_model::run" << std::endl;
+        std::cout << "yolov3_model::run " << std::to_string(requests.size()) << std::endl;
         std::vector<cv::Mat> req_batch;
 
         for (const auto& req_obj : requests)

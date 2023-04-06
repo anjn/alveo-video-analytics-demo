@@ -233,8 +233,8 @@ struct app2queue_yolov3 : app2queue_bgr
     };
 
     yolov3_client::queue_t result_queue;
-    yolov3_client client;
-    std::queue<T> buffer_queue;
+    std::vector<std::shared_ptr<yolov3_client>> clients;
+    //std::queue<T> buffer_queue;
 
     std::vector<mytracker> trackers;
 
@@ -251,9 +251,12 @@ struct app2queue_yolov3 : app2queue_bgr
         queue_ptr_t& queue_
     ) :
         app2queue_bgr(appsinks_, queue_),
-        result_queue(yolov3_client::create_result_queue()),
-        client(yolov3_server_address, result_queue)
+        result_queue(yolov3_client::create_result_queue())
     {
+        for (int i = 0; i < 3; i++) {
+            clients.push_back(std::make_shared<yolov3_client>(yolov3_server_address, result_queue));
+        }
+
         // BGR order
         color_palette.push_back(cv::Scalar(0xcb, 0x5d, 0xf5));
         color_palette.push_back(cv::Scalar(0xff, 0x86, 0x63));
@@ -281,10 +284,11 @@ struct app2queue_yolov3 : app2queue_bgr
         auto mat = mats[0];
         //std::cout << "app2queue_yolov3::proc_buffer" << std::endl;
 
-        // Request ML inference if client is not busy
-        if (!client.is_busy())
-        {
-            client.request(mat.clone());
+        // Request ML inference if clients are not busy
+        for (auto& client: clients) {
+            if (!client->is_busy()) {
+                client->request(mat.clone());
+            }
         }
 
         // Get ML inference result from queue
