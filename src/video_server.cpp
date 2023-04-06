@@ -234,6 +234,7 @@ struct app2queue_yolov3 : app2queue_bgr
 
     yolov3_client::queue_t result_queue;
     yolov3_client client;
+    std::queue<T> buffer_queue;
 
     std::vector<mytracker> trackers;
 
@@ -667,6 +668,7 @@ int main(int argc, char** argv)
     // Load config
     const auto config = toml::parse("config.toml");
 
+    int output_rtsp      = toml::find<int>(config, "video", "output-rtsp");
     int output_width     = toml::find<int>(config, "video", "output-width");
     int output_height    = toml::find<int>(config, "video", "output-height");
     int output_bitrate   = toml::find<int>(config, "video", "output-bitrate");
@@ -747,7 +749,12 @@ int main(int argc, char** argv)
     std::cout << rtsp_server_location << std::endl;
     rtspclientsink sink(rtsp_server_location);
 
-    build_pipeline_and_play(src, conv, raw, enc, sink);
+    autovideosink sink1;
+
+    if (output_rtsp)
+        build_pipeline_and_play(src, conv, raw, enc, sink);
+    else
+        build_pipeline_and_play(src, sink1);
 
     // Compositor
     compositor_bgr comp(queues, src.src, output_width, output_height);

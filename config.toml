@@ -25,6 +25,8 @@ device-index = -1
 focus-size = 3
 focus-duration = 3
 
+output-rtsp = 0
+
 output-width = 1920
 output-height = 1080
 output-bitrate = 16000

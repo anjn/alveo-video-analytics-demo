@@ -349,7 +349,8 @@ struct autovideosink
     {
         return
             " videoconvert"
-            "! autovideosink async=false sync=false"
+            //"! autovideosink async=false sync=false"
+            "! autovideosink"
             ;
     }
 
