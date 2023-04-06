@@ -53,6 +53,7 @@ struct rtsp_receiver
         g_object_set(G_OBJECT(src), "do-rtcp", true, nullptr);
         g_object_set(G_OBJECT(src), "ntp-sync", false, nullptr);
         g_object_set(G_OBJECT(src), "drop-on-latency", true, nullptr);
+        g_object_set(G_OBJECT(src), "protocols", "tcp", nullptr);
         //g_object_set(G_OBJECT(src), "is-live", true, nullptr);
         gst_object_unref(src);
     }
@@ -135,6 +136,12 @@ struct videotestsrc
             ;
     }
 
+    void set_params(GstElement* pipeline) {}
+};
+
+struct videoconvert
+{
+    std::string get_description() { return "videoconvert"; }
     void set_params(GstElement* pipeline) {}
 };
 
@@ -247,13 +254,14 @@ struct vvas_scaler
     const int width;
     const int height;
     const std::string format;
-    const bool multi_scaler;
+    bool multi_scaler;
 
     const std::string scaler_name;
 
     vvas_scaler(
         int dev_idx_,
-        int width_, int height_,
+        int width_ = 0,
+        int height_ = 0,
         const std::string& format_ = "NV12",
         bool multi_scaler_ = false
     ) : 
@@ -270,9 +278,14 @@ struct vvas_scaler
         std::string desc =
 	        " vvas_xabrscaler name=" + scaler_name;
 
-        if (!multi_scaler)
-            desc +=
-            " ! video/x-raw, width=" + std::to_string(width) + ", height=" + std::to_string(height) + ", format=" + format;
+        if (!multi_scaler) {
+            assert(width > 0);
+            assert(height > 0);
+            assert(format != "");
+
+            desc += " ! video/x-raw, width=" + std::to_string(width) +
+                    ", height=" + std::to_string(height) + ", format=" + format;
+        }
 
         return desc;
     }
@@ -424,16 +437,27 @@ struct x264enc
 {
     const std::string name;
 
+    int bitrate;
+
     x264enc() :
-        name(get_new_name("enc"))
+        name(get_new_name("enc")),
+        bitrate(16000)
     {}
 
     std::string get_description()
     {
-        return " x264enc name=" + name + " speed-preset=ultrafast tune=fastdecode key-int-max=15 bframes=0 bitrate=6000";
+        return " x264enc name=" + name + " speed-preset=ultrafast tune=zerolatency sliced-threads=true key-int-max=15 ref=1 bframes=0 cabac=0";
     }
 
-    void set_params(GstElement* pipeline) {}
+    void set_params(GstElement* pipeline)
+    {
+        auto enc = gst_bin_get_by_name(GST_BIN(pipeline), name.c_str());
+        assert(enc);
+        g_object_set(G_OBJECT(enc),
+                     "bitrate", bitrate,
+                     nullptr);
+        gst_object_unref(enc);
+    }
 };
 
 template<typename... Args>

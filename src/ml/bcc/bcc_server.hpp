@@ -72,16 +72,13 @@ struct bcc_model
             //std::cout << "offset : " << offset_x[i] << ", " << offset_y[i] << std::endl;
 
             // Vitis AI image is in RGB format
-            // U30 decoded image is in ABGR format?
-
             int8_t* ibp = in->pointer<int8_t>();
             const int batch_offset = in_shape.height * in_shape.width * in_shape.channel * i;
             for (int y = 0; y < h; y++) {
                 for (int x = 0; x < w; x++) {
                     for (int c = 0; c < 3; c++) {
                         ibp[batch_offset + ((y + offset_y[i]) * in_shape.width + (x + offset_x[i])) * 3 + c] =
-                            //int(roundf((r.image[y * s + x * n + (2 - c)] - mean[c]) * in->scale * scale[c])); // BGRA
-                            int(roundf((r.image[y * s + x * n + (3 - c)] - mean[c]) * in->scale * scale[c])); // ABGR?
+                            int(roundf((r.image[y * s + x * n + (2 - c)] - mean[c]) * in->scale * scale[c])); // BGR
                     }
                 }
             }

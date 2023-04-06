@@ -61,7 +61,7 @@ int main(int argc, char** argv)
     carclassifcation_client c_client(c_conf.address, c_result_queue);
 
     y_client.request(img);
-    auto result = y_result_queue->pop();
+    const auto& [result, tmp] = y_result_queue->pop();
 
     std::cout << "result: " << result.detections.size() << std::endl;
 

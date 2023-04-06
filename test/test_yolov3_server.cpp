@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     yolov3_client client(conf.address, result_queue);
 
     client.request(img);
-    auto result = result_queue->pop();
+    const auto& [result, tmp] = result_queue->pop();
 
     std::cout << "result: " << result.detections.size() << std::endl;
 

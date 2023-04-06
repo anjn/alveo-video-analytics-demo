@@ -27,6 +27,7 @@ export VVAS_CORE_LOG_FILE_PATH=CONSOLE
 sudo cp -rf /opt/xilinx/xclbin/image_processing.cfg /opt/xilinx/vvas/share
 
 # Build program
+set -e
 mkdir -p build
 pushd build
 cmake /workspace/demo

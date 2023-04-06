@@ -1,6 +1,12 @@
 #pragma once
 #include <memory>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#include <opencv2/opencv.hpp>
+#pragma GCC diagnostic pop
+
 #include "ml/base/inf_client.hpp"
 #include "ml/bcc/bcc_message.hpp"
 
@@ -27,7 +33,7 @@ struct bcc_message_adapter
 
         r.image_w = mat.cols;
         r.image_h = mat.rows;
-        r.image_c = 4;
+        r.image_c = 3;
         r.image_stride = mat.step;
         int size = mat.step * r.image_h;
         r.image.resize(size);
@@ -48,17 +54,11 @@ struct bcc_message_adapter
                 double v = result.map[y * result.map_w + x] / 127.0;
                 double va = pow(v, 0.4);
                 cv::Vec4b p;
-                // RGBA
-                //p[0] = 255;
-                //p[1] = std::min(255, (int)(v * 250));
-                //p[2] = 0;
-                //p[3] = std::min(255, (int)(va * 224));
-
-                // ABGR
-                p[0] = std::min(255, (int)(va * 224));
-                p[1] = 0;
-                p[2] = std::min(255, (int)(v * 250));
-                p[3] = 255;
+                // BGRA
+                p[0] = 0;
+                p[1] = std::min(255, (int)(v * 250));
+                p[2] = 255;
+                p[3] = std::min(255, (int)(va * 224));
 
                 heatmap.at<cv::Vec4b>(y, x) = p;
             }
