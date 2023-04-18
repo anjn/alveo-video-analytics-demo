@@ -6,7 +6,7 @@
 #include "msgpack.hpp"
 #pragma GCC diagnostic pop
 
-struct yolov3_bbox {
+struct yolo_bbox {
     int label;
     float prob;
     float x;
@@ -17,7 +17,7 @@ struct yolov3_bbox {
     MSGPACK_DEFINE(label, prob, x, y, width, height);
 };
 
-struct yolov3_request_message {
+struct yolo_request_message {
     std::vector<uint8_t> mat; // BGR matrix
     int rows;
     int cols;
@@ -25,8 +25,8 @@ struct yolov3_request_message {
     MSGPACK_DEFINE(mat, rows, cols);
 };
 
-struct yolov3_result_message {
-    std::vector<yolov3_bbox> detections;
+struct yolo_result_message {
+    std::vector<yolo_bbox> detections;
 
     MSGPACK_DEFINE(detections);
 };

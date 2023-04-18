@@ -9,6 +9,8 @@
 /docker/packages
 /docker/models
 /build
+/debug
 /compile_commands.json
 /samples
 /.cache
+/tmp.txt

@@ -13,6 +13,7 @@
 #include "ml/bcc/bcc_server.hpp"
 #include "ml/carclassification/carclassification_server.hpp"
 #include "ml/yolov3/yolov3_server.hpp"
+#include "ml/yolov6/yolov6_server.hpp"
 
 template<typename T>
 inf_server_config load_config(const T& root, const std::string& name, const int default_max_batch_size)
@@ -42,12 +43,17 @@ int main (int argc, char** argv)
 
     const auto config_obj = toml::find(toml::parse(config), "ml");
 
+    std::vector<inf_server_config> confs;
+
     yolov3_server server0 { load_config(config_obj, "yolov3", max_batch_size) };
     server0.start(true);
 
-    carclassification_server server1 { load_config(config_obj, "carclassification", max_batch_size) };
+    yolov6_server server1 { load_config(config_obj, "yolov6", max_batch_size) };
     server1.start(true);
 
-    bcc_server server2 { load_config(config_obj, "bcc", max_batch_size) };
-    server2.start();
+    carclassification_server server2 { load_config(config_obj, "carclassification", max_batch_size) };
+    server2.start(true);
+
+    bcc_server server3 { load_config(config_obj, "bcc", max_batch_size) };
+    server3.start();
 }

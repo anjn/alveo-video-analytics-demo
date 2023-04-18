@@ -9,19 +9,19 @@
 #pragma GCC diagnostic pop
 
 #include "ml/base/inf_client.hpp"
-#include "ml/yolov3/yolov3_message.hpp"
+#include "ml/yolo_common/yolo_message.hpp"
 
-struct yolov3_message_adapter
+struct yolo_message_adapter
 {
     using request_t = cv::Mat;
-    using result_t = yolov3_result_message;
-    using request_message_t = yolov3_request_message;
-    using result_message_t = yolov3_result_message;
+    using result_t = yolo_result_message;
+    using request_message_t = yolo_request_message;
+    using result_message_t = yolo_result_message;
 
     request_message_t create_request(const request_t& mat)
     {
         // Create request
-        yolov3_request_message req_obj;
+        yolo_request_message req_obj;
         req_obj.rows = mat.rows;
         req_obj.cols = mat.cols;
         req_obj.mat.resize(mat.rows * mat.cols * 3);
@@ -36,4 +36,4 @@ struct yolov3_message_adapter
     }
 };
 
-using yolov3_client = inf_client<yolov3_message_adapter>;
+using yolo_client = inf_client<yolo_message_adapter>;

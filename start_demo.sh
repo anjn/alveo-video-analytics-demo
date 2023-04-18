@@ -26,11 +26,21 @@ export VVAS_CORE_LOG_FILE_PATH=CONSOLE
 #Needed for RawTensor graph runner multi threaded use case 
 sudo cp -rf /opt/xilinx/xclbin/image_processing.cfg /opt/xilinx/vvas/share
 
-# Build program
+DEBUG=0
+
 set -e
-mkdir -p build
-pushd build
-cmake /workspace/demo
+
+# Build program
+if [[ $DEBUG -eq 1 ]] ; then
+    mkdir -p debug
+    pushd debug
+    cmake -DCMAKE_BUILD_TYPE=Debug /workspace/demo
+else
+    mkdir -p build
+    pushd build
+    cmake /workspace/demo
+fi
+
 make -j$(nproc) video_server
 
 set -xe
@@ -55,4 +65,8 @@ sed -i "s/RTSP_SERVER_IP/$RTSP_SERVER_IP/" config.toml
 # Run
 ulimit -n 2048
 export GST_DEBUG=WARNING
-./video_server #--max-devices $max_devices
+if [[ $DEBUG -eq 1 ]] ; then
+    gdb -ex run --args ./video_server
+else
+    ./video_server #--max-devices $max_devices
+fi

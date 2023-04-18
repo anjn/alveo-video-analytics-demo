@@ -22,6 +22,7 @@ tmux new-session -d -s demo-session "$dir/docker/run.sh --name demo-ml --port 85
 tmux select-layout even-horizontal
 
 ip_ml=
+sleep 2
 until [[ -n $ip_ml ]] ; do
     echo Waiting for ML container up
     sleep 1

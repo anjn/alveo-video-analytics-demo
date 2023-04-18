@@ -36,8 +36,8 @@ struct hw_config_v70
                      "kernel-name", decoder_kernel.c_str(),
                      "dev-idx", dev_idx,
                      "instance-id", vdu_idx,
-                     //"low-latency", true,
-                     //"splitbuff-mode", false,
+                     "low-latency", true,
+                     "splitbuff-mode", false,
                      "avoid-output-copy", true,
                      "avoid-dynamic-alloc", true,
                      nullptr);

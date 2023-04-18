@@ -27,20 +27,33 @@ sudo cp -rf /workspace/demo/docker/packages/librt-engine.so /usr/lib/librt-engin
 
 sudo mkdir -p /usr/share/vitis_ai_library/models
 sudo cp -rf /workspace/demo/docker/models/yolov3_voc_tf /usr/share/vitis_ai_library/models/
+sudo cp -rf /workspace/demo/docker/models/yolov6m_pt /usr/share/vitis_ai_library/models/
 sudo cp -rf /workspace/demo/docker/models/chen_color_resnet18_pt /usr/share/vitis_ai_library/models/
 sudo cp -rf /workspace/demo/docker/models/vehicle_* /usr/share/vitis_ai_library/models/
+sudo cp -rf /workspace/demo/docker/models/custom_car_type /usr/share/vitis_ai_library/models/
 sudo cp -rf /opt/xilinx/examples/yolov3_label.json /usr/share/vitis_ai_library/models/yolov3_voc_tf/label.json
 
-#mkdir -p /tmp/build
-#pushd /tmp/build
-mkdir -p build
-pushd build
-#cmake -DCMAKE_BUILD_TYPE=Debug /workspace/demo
+sudo apt install -y --allow-downgrades /workspace/demo/docker/packages/libvitis_ai_library_3.0.0_amd64.deb
+
+DEBUG=0
+
+if [[ $DEBUG -eq 1 ]] ; then
+    mkdir -p debug
+    pushd debug
+    cmake -DCMAKE_BUILD_TYPE=Debug /workspace/demo
+else
+    mkdir -p build
+    pushd build
+    cmake /workspace/demo
+fi
 #make -j$(nproc) VERBOSE=1 --no-print-directory
-cmake /workspace/demo
 make -j$(nproc) ml_server
 
 # Copy config file
 cp /workspace/demo/config.toml .
-./ml_server #--max-batch-size $max_batch_size
 
+if [[ $DEBUG -eq 1 ]] ; then
+    gdb -ex run --args ./ml_server
+else
+    ./ml_server #--max-batch-size $max_batch_size
+fi

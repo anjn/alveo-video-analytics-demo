@@ -16,7 +16,7 @@
 #include "ml/carclassification/carclassification_server.hpp"
 #include "ml/carclassification/carclassification_client.hpp"
 #include "ml/yolov3/yolov3_server.hpp"
-#include "ml/yolov3/yolov3_client.hpp"
+#include "ml/yolo_common/yolo_client.hpp"
 
 int main(int argc, char** argv)
 {
@@ -24,8 +24,10 @@ int main(int argc, char** argv)
     arg_s(yolo_xmodel, "/usr/share/vitis_ai_library/models/yolov3_voc_tf/yolov3_voc_tf.xmodel", "Path of xmodel file");
     arg_s(color_xmodel, "/usr/share/vitis_ai_library/models/chen_color_resnet18_pt/chen_color_resnet18_pt.xmodel", "Path of xmodel file");
     arg_s(make_xmodel, "/usr/share/vitis_ai_library/models/vehicle_make_resnet18_pt/vehicle_make_resnet18_pt.xmodel", "Path of xmodel file");
-    arg_s(type_xmodel, "/usr/share/vitis_ai_library/models/vehicle_type_resnet18_pt/vehicle_type_resnet18_pt.xmodel", "Path of xmodel file");
+    //arg_s(type_xmodel, "/usr/share/vitis_ai_library/models/vehicle_type_resnet18_pt/vehicle_type_resnet18_pt.xmodel", "Path of xmodel file");
+    arg_s(type_xmodel, "/usr/share/vitis_ai_library/models/custom_car_type/custom_car_type.xmodel", "Path of xmodel file");
     arg_s(image, "/workspace/demo/samples/The_million_march_man.jpg", "Test image");
+    arg_d(scale, 1.0, "Scale");
     arg_end;
 
     // yolov3
@@ -54,14 +56,14 @@ int main(int argc, char** argv)
 
     cv::Mat img = cv::imread(image);
 
-    auto y_result_queue = yolov3_client::create_result_queue();
-    yolov3_client y_client(y_conf.address, y_result_queue);
+    auto y_result_queue = yolo_client::create_result_queue();
+    yolo_client y_client(y_conf.address, y_result_queue);
 
     auto c_result_queue = carclassifcation_client::create_result_queue();
     carclassifcation_client c_client(c_conf.address, c_result_queue);
 
     y_client.request(img);
-    const auto& [result, tmp] = y_result_queue->pop();
+    const auto& result = y_result_queue->pop();
 
     std::cout << "result: " << result.detections.size() << std::endl;
 
@@ -70,7 +72,7 @@ int main(int argc, char** argv)
         std::cout << det.label << "\t" << det.prob << "\t" << det.x << "\t" << det.y << std::endl;
         if (det.prob >= 0.5)
         {
-            auto car = crop_resize_for_carclassification(img, det);
+            auto car = crop_resize_for_carclassification(img, det, scale);
 
             c_client.request(car);
             auto result = c_result_queue->pop();

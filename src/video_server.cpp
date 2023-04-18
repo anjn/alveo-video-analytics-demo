@@ -10,437 +10,18 @@
 
 #include <toml.hpp>
 #include <arg/arg.h>
-#include <ByteTrack/BYTETracker.h>
-#include <influxdb.hpp>
 
 #include "video/rtsp_server.hpp"
 #include "video/gst_app_bgr_utils.hpp"
 #include "video/gst_pipeline_utils.hpp"
 #include "video/hw_config_v70.hpp"
-#include "ml/bcc/bcc_client.hpp"
-#include "ml/yolov3/yolov3_client.hpp"
-#include "ml/carclassification/carclassification_client.hpp"
 #include "utils/queue_mt.hpp"
 #include "utils/time_utils.hpp"
 
+#include "yolo.hpp"
+#include "bcc.hpp"
+
 using namespace std::chrono_literals;
-
-std::string yolov3_server_address = "tcp://127.0.0.1:5555";
-std::string car_server_address = "tcp://127.0.0.1:5556";
-std::string bcc_server_address = "tcp://127.0.0.1:5557";
-
-fps_counter yolov3_fps(1000);
-fps_counter car_fps(8000);
-fps_counter bcc_fps(1000);
-
-struct metrics_client_influx_db
-{
-    std::string id;
-
-    influxdb_cpp::server_info server_info;
-
-    metrics_client_influx_db(
-        std::string id_,
-        influxdb_cpp::server_info server_info_
-    ) :
-        id(id_),
-        server_info(server_info_)
-    {}
-
-    void push(int count)
-    {
-        influxdb_cpp::builder()
-            .meas("count")
-            .tag("camera", id)
-            .field("value", count)
-            .post_http(server_info);
-    }
-
-    std::string get_id() const
-    {
-        return id;
-    }
-};
-
-struct app2queue_bcc : app2queue_bgr
-{
-    bcc_client::queue_t result_queue;
-    bcc_client client;
-    cv::Mat heatmap;
-    int count;
-
-    std::shared_ptr<metrics_client_influx_db> metrics_client;
-
-    app2queue_bcc(
-        std::vector<std::tuple<GstAppSink**, cv::Size>> appsinks_,
-        queue_ptr_t& queue_
-    ) :
-        app2queue_bgr(appsinks_, queue_),
-        result_queue(bcc_client::create_result_queue()),
-        client(bcc_server_address, result_queue),
-        count(0)
-    {}
-
-    virtual void proc_buffer(std::vector<cv::Mat>& mats) override
-    {
-        auto mat = mats[0];
-
-        // Request ML inference if client is not busy
-        if (!client.is_busy())
-        {
-            client.request(mat.clone());
-        }
-
-        // Get ML inference result from queue
-        while (result_queue->size() > 0)
-        {
-            std::tie(heatmap, count) = result_queue->pop();
-
-            if (metrics_client)
-                metrics_client->push(count);
-        }
-
-        // Draw heatmap
-        if (!heatmap.empty())
-        {
-            for (int y = 0; y < mat.rows - 8; y++) {
-                for (int x = 0; x < mat.cols; x++) {
-                    auto& p = mat.at<cv::Vec3b>(y, x);
-                    auto& ph = heatmap.at<cv::Vec4b>(y / 8 , x / 8);
-                    float pa = ph[3] / 255.0;
-                    for (int c = 0; c < 3; c++) {
-                        p[c] = p[c] * (1 - pa) + ph[c] * pa;
-                    }
-                }
-            }
-        }
-
-        // Draw text
-        cv::putText(mat, std::to_string(int(count)), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(0, 0, 0), 14);
-        cv::putText(mat, std::to_string(int(count)), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(60, 240, 60), 6);
-
-        //if (metrics_client)
-        //{
-        //    auto id = metrics_client->get_id();
-        //    cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(0, 0, 0), 14);
-        //    cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(255, 255, 255), 6);
-        //}
-    }
-};
-
-struct carclassification_score
-{
-    int count = 0;
-    float color_scores[15];
-    float make_scores[39];
-    float type_scores[7];
-
-    carclassification_score()
-    {
-        std::fill(color_scores, color_scores + 15, 0);
-        std::fill(make_scores, make_scores + 39, 0);
-        std::fill(type_scores, type_scores + 7, 0);
-    }
-
-    size_t color_index() {
-        return std::distance(color_scores, std::max_element(color_scores, color_scores + 15));
-    }
-    size_t make_index() {
-        return std::distance(make_scores, std::max_element(make_scores, make_scores + 39));
-    }
-    size_t type_index() {
-        return std::distance(type_scores, std::max_element(type_scores, type_scores + 7));
-    }
-};
-
-struct carclassification_runner
-{
-    mutable std::mutex mutex_scores;
-    std::unordered_map<size_t, carclassification_score> track_id_to_scores;
-
-    queue_mt<std::tuple<cv::Mat, cv::Rect, size_t>> request_queue;
-
-    std::vector<std::thread> workers;
-
-    carclassification_runner()
-    {
-        for (int i = 0; i < 6; i++) {
-            workers.emplace_back([this]() {
-                auto result_queue = carclassifcation_client::create_result_queue();
-                carclassifcation_client client(car_server_address, result_queue);
-
-                while(true)
-                {
-                    auto [img, box, track_id] = request_queue.pop();
-                    auto car = crop_resize_for_carclassification(img, box);
-                    client.request(car);
-
-                    auto result = result_queue->pop();
-
-                    {
-                        std::unique_lock<std::mutex> lk(mutex_scores);
-                        auto& score = track_id_to_scores[track_id];
-                        score.color_scores[result.color.label_id] += result.color.score;
-                        score.make_scores[result.make.label_id] += result.make.score;
-                        score.type_scores[result.type.label_id] += result.type.score;
-                        score.count++;
-                    }
-
-                    car_fps.count();
-                }
-            });
-        }
-    }
-
-    template<typename Func>
-    void get_score(size_t track_id, Func func)
-    {
-        std::unique_lock<std::mutex> lk(mutex_scores);
-        if (auto it = track_id_to_scores.find(track_id); it != track_id_to_scores.end()) {
-            func(it->second);
-        }
-    }
-};
-
-struct app2queue_yolov3 : app2queue_bgr
-{
-    struct mytracker
-    {
-        std::vector<int> target_label_ids;
-        byte_track::BYTETracker tracker;
-        int frame = 0;
-        int count = 0;
-        std::unordered_map<size_t, int> track_id_to_count;
-        std::unordered_map<size_t, size_t> track_id_to_last_detected;
-    
-        mytracker(const std::vector<int>& ids): target_label_ids(ids), tracker(10) {}
-    };
-    
-    struct detection_result
-    {
-        byte_track::Rect<float> rect;
-        int score;
-        int label_id;
-        size_t track_id;
-        size_t frame_id;
-        int count;
-    };
-
-    template<typename T>
-    static byte_track::Rect<T> scale(const byte_track::Rect<T>& r, T value)
-    {
-        return { r.x() * value, r.y() * value, r.width() * value, r.height() * value };
-    };
-
-    yolov3_client::queue_t result_queue;
-    std::vector<std::shared_ptr<yolov3_client>> clients;
-    std::queue<std::vector<cv::Mat>> buffer_queue;
-
-    std::vector<mytracker> trackers;
-
-    carclassification_runner car_runner;
-
-    std::vector<cv::Scalar> color_palette;
-
-    std::vector<detection_result> detections;
-
-    std::shared_ptr<metrics_client_influx_db> metrics_client;
-
-    app2queue_yolov3(
-        std::vector<std::tuple<GstAppSink**, cv::Size>> appsinks_,
-        queue_ptr_t& queue_
-    ) :
-        app2queue_bgr(appsinks_, queue_),
-        result_queue(yolov3_client::create_result_queue())
-    {
-        for (int i = 0; i < 3; i++) {
-            clients.push_back(std::make_shared<yolov3_client>(yolov3_server_address, result_queue));
-        }
-
-        // BGR order
-        color_palette.push_back(cv::Scalar(0xcb, 0x5d, 0xf5));
-        color_palette.push_back(cv::Scalar(0xff, 0x86, 0x63));
-        color_palette.push_back(cv::Scalar(0x88, 0xe6, 0x49));
-        color_palette.push_back(cv::Scalar(0x38, 0xce, 0xdc));
-        color_palette.push_back(cv::Scalar(0x49, 0x82, 0xf5));
-        color_palette.push_back(cv::Scalar(0x2f, 0x4a, 0xf0));
-        color_palette.push_back(cv::Scalar(0x9c, 0x33, 0xf0));
-        color_palette.push_back(cv::Scalar(0xf0, 0x2a, 0x34));
-        color_palette.push_back(cv::Scalar(0xcf, 0xb0, 0xb0));
-    }
-
-    // 1,  bicycle
-    // 5,  bus
-    // 6,  car
-    // 13, motorbike
-    // 14, person
-    void set_detect_label_ids(std::vector<int> label_ids)
-    {
-        trackers.emplace_back(label_ids);
-    }
-
-    virtual void proc_buffer(std::vector<cv::Mat>& mats) override
-    {
-        // Request ML inference if clients are not busy
-        for (auto& client: clients) {
-            if (!client->is_busy()) {
-                client->request(mats[2]); // 2 for infer
-                buffer_queue.push(mats);
-            }
-        }
-
-        // Get ML inference result from queue
-        while (result_queue->size() > 0)
-        {
-            auto result = result_queue->pop();
-            auto inferred_mats = buffer_queue.front();
-            buffer_queue.pop();
-            auto img = inferred_mats[1]; // 1 for crop
-
-            yolov3_fps.count();
-
-            //std::cout << "detections " << result.detections.size() << std::endl;
-
-            detections.clear();
-
-            const float object_size_threshold = 0.00;
-            const float size_threshold = object_size_threshold * object_size_threshold;
-
-            // Tracking
-            for (auto& tracker : trackers)
-            {
-                std::vector<byte_track::Object> objects;
-
-                for (auto& b : result.detections)
-                {
-                    bool is_target = false;
-                    for (auto& id : tracker.target_label_ids) if (b.label == id) is_target = true;
-
-                    if (is_target && b.width * b.height > size_threshold)
-                    {
-                        byte_track::Rect rect { b.x, b.y, b.width, b.height };
-                        rect = scale(rect, 1000.0f);
-                        byte_track::Object obj { rect, b.label, b.prob };
-                        objects.push_back(obj);
-                    }
-                }
-
-                auto outputs = tracker.tracker.update(objects);
-
-                for (auto& o : outputs)
-                {
-                    detection_result det;
-                    det.rect = scale(o->getRect(), 0.001f);
-                    det.score = o->getScore() * 100;
-                    det.track_id = o->getTrackId();
-                    det.frame_id = o->getFrameId();
-                    det.label_id = tracker.target_label_ids[0];
-
-                    if (!tracker.track_id_to_count.contains(det.track_id))
-                    {
-                        tracker.track_id_to_count[det.track_id] = ++tracker.count;
-                    }
-                    det.count = tracker.track_id_to_count[det.track_id];
-
-                    tracker.track_id_to_last_detected[det.track_id] = det.frame_id;
-
-                    detections.push_back(det);
-                }
-
-                if (metrics_client)
-                    metrics_client->push(detections.size());
-
-                // TODO Remove old track_id
-            }
-            
-            // Sort detections by classification count
-            std::vector<std::pair<int, int>> det_index_to_count;
-            for (int i = 0; i < detections.size(); i++)
-            {
-                // Run classification only for cars
-                if (detections[i].label_id == 1) // TODO bicycle?
-                {
-                    int track_id = detections[i].track_id;
-                    int count = 0;
-                    car_runner.get_score(track_id, [&count](carclassification_score& score) { count = score.count; });
-                    det_index_to_count.emplace_back(i, count);
-                }
-            }
-
-            std::sort(det_index_to_count.begin(), det_index_to_count.end(), [](auto& a, auto& b) { return a.second < b.second; });
-
-            int num_classification = std::min(4ul - car_runner.request_queue.size(), det_index_to_count.size());
-
-            for (int i = 0; i < num_classification; i++)
-            {
-                auto& det = detections[det_index_to_count[i].first];
-                cv::Rect rect {
-                    int(det.rect.x() * img.cols), int(det.rect.y() * img.rows),
-                    int(det.rect.width() * img.cols), int(det.rect.height() * img.rows)
-                };
-                car_runner.request_queue.push(std::make_tuple(img, rect, det.track_id));
-            }
-        }
-
-        auto mat = mats[0]; // 0 for display
-
-        for (auto& det : detections)
-        {
-            auto& r0 = det.rect;
-
-            byte_track::Rect r {
-                int(r0.x() * mat.cols), int(r0.y() * mat.rows),
-                int(r0.width() * mat.cols), int(r0.height() * mat.rows)
-            };
-
-            cv::Scalar color;
-            std::string label;
-
-            color = color_palette[det.count % color_palette.size()];
-
-            double fs = 0.8;
-            int tx = r.x() + 5;
-            int th = 30 * fs;
-            int ty = r.y() + 14 - th;
-            int thickness = 2;
-
-            cv::rectangle(mat,
-                          cv::Point(r.x(), r.y()),
-                          cv::Point(r.x() + r.width(), r.y() + r.height()),
-                          color, 2, 1, 0);
-
-            int baseline = 0;
-            cv::Size text = cv::getTextSize(std::to_string(det.count), cv::FONT_HERSHEY_DUPLEX, fs, thickness, &baseline);
-            cv::rectangle(mat, cv::Point(r.x(), ty + 3) + cv::Point(0, baseline), cv::Point(tx, ty) + cv::Point(text.width + 3, -text.height - 3), color, cv::FILLED, 1);
-            cv::putText(mat, std::to_string(det.count), cv::Point(tx, ty + 2), cv::FONT_HERSHEY_DUPLEX, fs, cv::Scalar(240, 240, 240), thickness);
-            ty += th + 6;
-
-            car_runner.get_score(det.track_id, [&](carclassification_score& score) {
-                auto& color_label = vehicle_color_labels[score.color_index()];
-                auto& make_label = vehicle_make_labels[score.make_index()];
-                auto& type_label = vehicle_type_labels[score.type_index()];
-
-                cv::putText(mat, color_label, cv::Point(tx, ty), cv::FONT_HERSHEY_DUPLEX, fs, color, thickness);
-                ty += th;
-                cv::putText(mat, make_label, cv::Point(tx, ty), cv::FONT_HERSHEY_DUPLEX, fs, color, thickness);
-                ty += th;
-                cv::putText(mat, type_label, cv::Point(tx, ty), cv::FONT_HERSHEY_DUPLEX, fs, color, thickness);
-                ty += th;
-            });
-        }
-
-        // Draw text
-        //cv::putText(mat, std::to_string(detections.size()), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(0, 0, 0), 14);
-        //cv::putText(mat, std::to_string(detections.size()), cv::Point(24, 100), cv::FONT_HERSHEY_DUPLEX, 3, cv::Scalar(60, 240, 60), 6);
-
-        //if (metrics_client)
-        //{
-        //    auto id = metrics_client->get_id();
-        //    cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(0, 0, 0), 14);
-        //    cv::putText(mat, id, cv::Point(24, mat.rows - 36), cv::FONT_HERSHEY_DUPLEX, 2, cv::Scalar(255, 255, 255), 6);
-        //}
-    }
-};
 
 struct compositor_bgr
 {
@@ -563,6 +144,8 @@ struct compositor_bgr
             auto color = cv::Scalar(0x35, 0xf5, 0x3a);
             cv::putText(mat, "YOLOv3 : " + std::to_string(int(yolov3_fps.get())), cv::Point(10, 60), cv::FONT_HERSHEY_DUPLEX, 2.0, cv::Scalar(0,0,0), 7);
             cv::putText(mat, "YOLOv3 : " + std::to_string(int(yolov3_fps.get())), cv::Point(10, 60), cv::FONT_HERSHEY_DUPLEX, 2.0, color, 2);
+            //cv::putText(mat, "YOLOv6m : " + std::to_string(int(yolov6_fps.get())), cv::Point(10, 60), cv::FONT_HERSHEY_DUPLEX, 2.0, cv::Scalar(0,0,0), 7);
+            //cv::putText(mat, "YOLOv6m : " + std::to_string(int(yolov6_fps.get())), cv::Point(10, 60), cv::FONT_HERSHEY_DUPLEX, 2.0, color, 2);
             cv::putText(mat, "ResNet18 : " + std::to_string(int(car_fps.get() * 3)), cv::Point(1920 / 5 * 3 / 2, 60), cv::FONT_HERSHEY_DUPLEX, 2.0, cv::Scalar(0,0,0), 7);
             cv::putText(mat, "ResNet18 : " + std::to_string(int(car_fps.get() * 3)), cv::Point(1920 / 5 * 3 / 2, 60), cv::FONT_HERSHEY_DUPLEX, 2.0, color, 2);
 
@@ -689,6 +272,7 @@ int main(int argc, char** argv)
     if (const char* e = std::getenv("ML_SERVER_IP")) ml_server_ip = e;
     bcc_server_address    = "tcp://" + ml_server_ip + ":" + std::to_string(toml::find<int>(config, "ml", "bcc", "port"));
     yolov3_server_address = "tcp://" + ml_server_ip + ":" + std::to_string(toml::find<int>(config, "ml", "yolov3", "port"));
+    yolov6_server_address = "tcp://" + ml_server_ip + ":" + std::to_string(toml::find<int>(config, "ml", "yolov6", "port"));
     car_server_address = "tcp://" + ml_server_ip + ":" + std::to_string(toml::find<int>(config, "ml", "carclassification", "port"));
 
     std::string host_server_ip = "127.0.0.1";
@@ -710,6 +294,11 @@ int main(int argc, char** argv)
     yolov3_sizes.push_back(cv::Size(1920, 1080)); // for crop
     yolov3_sizes.push_back(cv::Size(416, 234));   // for inference
 
+    std::vector<cv::Size> yolov6_sizes;
+    yolov6_sizes.push_back(cv::Size(1152, 648));  // for display, 1920*3/5 = 1152
+    yolov6_sizes.push_back(cv::Size(1920, 1080)); // for crop
+    yolov6_sizes.push_back(cv::Size(640, 360));   // for inference
+
     for (auto& t : toml::find<std::vector<toml::table>>(config, "video", "cameras"))
     {
         auto id = toml::get<std::string>(t.at("id"));
@@ -730,10 +319,13 @@ int main(int argc, char** argv)
 
             ml = bcc;
         }
-        else if (model == "yolov3")
+        else if (model == "yolov3" || model == "yolov6")
         {
-            auto yolo = std::make_shared<rtsp_ml<app2queue_yolov3, hw_config_v70>>(loc, device_index++, yolov3_sizes);
+            std::vector<cv::Size>* sizes = model == "yolov3" ? &yolov3_sizes : &yolov6_sizes;
+            auto yolo = std::make_shared<rtsp_ml<app2queue_yolo, hw_config_v70>>(loc, device_index++, *sizes);
             yolo->start();
+
+            yolo->a2q->set_yolo_version(model);
 
             std::vector<int> labels = toml::get<std::vector<int>>(t.at("labels"));
             yolo->a2q->set_detect_label_ids(labels);

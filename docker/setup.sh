@@ -17,6 +17,10 @@ sudo cp -rf /opt/xilinx/xclbin/image_processing.cfg /opt/xilinx/vvas/share
 #Copy the models required by Vitis AI
 sudo mkdir -p /usr/share/vitis_ai_library/models
 sudo cp -rf /workspace/demo/docker/models/yolov3_voc_tf /usr/share/vitis_ai_library/models/
+sudo cp -rf /workspace/demo/docker/models/yolov6m_pt /usr/share/vitis_ai_library/models/
 sudo cp -rf /workspace/demo/docker/models/chen_color_resnet18_pt /usr/share/vitis_ai_library/models/
 sudo cp -rf /workspace/demo/docker/models/vehicle_* /usr/share/vitis_ai_library/models/
+sudo cp -rf /workspace/demo/docker/models/custom_car_type /usr/share/vitis_ai_library/models/
 sudo cp -rf /opt/xilinx/examples/yolov3_label.json /usr/share/vitis_ai_library/models/yolov3_voc_tf/label.json
+
+sudo apt install -y --allow-downgrades /workspace/demo/docker/packages/libvitis_ai_library_3.0.0_amd64.deb

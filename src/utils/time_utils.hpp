@@ -3,6 +3,9 @@
 #include <chrono>
 #include <vector>
 #include <string>
+#include <iostream>
+#include <mutex>
+#include <spdlog/spdlog.h>
 
 struct fps_counter {
     typedef std::chrono::high_resolution_clock::time_point time_point_t;
@@ -45,13 +48,15 @@ struct stop_watch {
     void lap(std::string name) {
         auto time = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(time - last_lap).count();
-        std::cout << name << " : " << (duration / 1e6) << " ms" << std::endl;
+        //std::cout << name << " : " << (duration / 1e6) << " ms" << std::endl;
+        spdlog::info("{} : {} ms", name, duration / 1e6);
         last_lap = time;
     }
     void time(std::string name) {
         auto time = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(time - start_time).count();
-        std::cout << name << " : " << (duration / 1e6) << " ms" << std::endl;
+        //std::cout << name << " : " << (duration / 1e6) << " ms" << std::endl;
+        spdlog::info("{} : {} ms", name, duration / 1e6);
     }
     int get_time_ns() {
         auto time = std::chrono::high_resolution_clock::now();

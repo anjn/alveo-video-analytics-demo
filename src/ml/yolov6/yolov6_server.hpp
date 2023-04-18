@@ -8,25 +8,25 @@
 #include <opencv2/opencv.hpp>
 #pragma GCC diagnostic pop
 
-#include <vitis/ai/yolov3.hpp>
+#include <vitis/ai/yolov6.hpp>
 
 #include "ml/base/inf_server.hpp"
 #include "ml/yolo_common/yolo_message.hpp"
 
-struct yolov3_model
+struct yolov6_model
 {
     using request_t = yolo_request_message;
     using result_t = yolo_result_message;
 
-    std::unique_ptr<vitis::ai::YOLOv3> model;
+    std::unique_ptr<vitis::ai::YOLOv6> model;
 
-    yolov3_model(const std::vector<std::string>& xmodel_paths) :
-        model(vitis::ai::YOLOv3::create(xmodel_paths[0]))
+    yolov6_model(const std::vector<std::string>& xmodel_paths) :
+        model(vitis::ai::YOLOv6::create(xmodel_paths[0]))
     {}
 
     std::vector<result_t> run(const std::vector<request_t>& requests)
     {
-        std::cout << "yolov3_model::run " << std::to_string(requests.size()) << std::endl;
+        std::cout << "yolov6_model::run " << std::to_string(requests.size()) << std::endl;
         std::vector<cv::Mat> req_batch;
 
         for (const auto& req_obj : requests)
@@ -45,16 +45,19 @@ struct yolov3_model
         {
             // Create response
             auto& result = results.emplace_back();
+            auto& rows = requests[i].rows;
+            auto& cols = requests[i].cols;
 
-            for (auto& box : res_batch[i].bboxes)
+            for (auto& res : res_batch[i].bboxes)
             {
                 yolo_bbox r;
-                r.label = box.label;
-                r.prob = box.score;
-                r.x = box.x;
-                r.y = box.y;
-                r.width = box.width;
-                r.height = box.height;
+                r.label = res.label;
+                r.prob = res.score;
+                auto& box = res.box;
+                r.x = box[0] / cols;
+                r.y = box[1] / rows;
+                r.width = (box[2] - box[0]) / cols;
+                r.height = (box[3] - box[1]) / rows;
                 result.detections.push_back(r);
             }
         }
@@ -63,4 +66,5 @@ struct yolov3_model
     }
 };
 
-using yolov3_server = inf_server<yolov3_model>;
+using yolov6_server = inf_server<yolov6_model>;
+

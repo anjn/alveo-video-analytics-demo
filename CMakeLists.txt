@@ -16,6 +16,11 @@ FetchContent_Declare(
 )
 
 FetchContent_Declare(
+    spdlog
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/spdlog-1.8.1
+)
+
+FetchContent_Declare(
     bytetrack
     SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/ByteTrack-cpp-main
 )
@@ -23,8 +28,9 @@ FetchContent_Declare(
 set(MSGPACK_BUILD_TESTS OFF CACHE INTERNAL "")
 set(BUILD_BYTETRACK_TEST OFF CACHE INTERNAL "")
 set(ZMQ_BUILD_TESTS OFF CACHE INTERNAL "")
+set(SPDLOG_BUILD_SHARED OFF CACHE INTERNAL "")
 
-FetchContent_MakeAvailable(zeromq msgpack bytetrack)
+FetchContent_MakeAvailable(zeromq msgpack spdlog bytetrack)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(
@@ -67,11 +73,13 @@ function(add_target NAME DIR)
         libzmq-static
         msgpackc-static
         bytetrack-static
+        spdlog
         PkgConfig::gstreamer
         PkgConfig::ffmpeg
         PkgConfig::xrt
         ${OpenCV_LIBS}
         -lvitis_ai_library-yolov3
+        -lvitis_ai_library-yolov6
         -lvitis_ai_library-classification
         -lvitis_ai_library-vehicleclassification
         -lvitis_ai_library-dpu_task
@@ -86,12 +94,13 @@ function(add_target NAME DIR)
     )
 endfunction()
 
-foreach(TARGET ml_server video_server)
+foreach(TARGET ml_server video_server extract_objects)
     add_target(${TARGET} src)
 endforeach()
 
 foreach(TEST
         test_yolov3 test_yolov3_batch test_yolov3_server test_bcc_server
+        test_yolov6_server
         test_carclassification_server
         test_gst_pipeline_utils test_rtsp_server test_rtsp_repeat test_rtspclientsink
         test_multifilesrc test_multiple_pipelines
