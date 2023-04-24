@@ -159,18 +159,21 @@ struct app2queue_yolo : app2queue_bgr
                 cv::putText(mat, label, cv::Point(tx, ty + 2), cv::FONT_HERSHEY_DUPLEX, fs, cv::Scalar(240, 240, 240), thickness);
                 ty += th + 6;
     
-                car_runner.get_score(det.track_id, [&](carclassification_score& score) {
-                    auto& color_label = vehicle_color_labels[score.color_index()];
-                    auto& make_label = vehicle_make_labels[score.make_index()];
-                    auto& type_label = vehicle_type_labels[score.type_index()];
-    
-                    cv::putText(mat, color_label, cv::Point(tx, ty), cv::FONT_HERSHEY_DUPLEX, fs, color, thickness);
-                    ty += th;
-                    cv::putText(mat, make_label, cv::Point(tx, ty), cv::FONT_HERSHEY_DUPLEX, fs, color, thickness);
-                    ty += th;
-                    cv::putText(mat, type_label, cv::Point(tx, ty), cv::FONT_HERSHEY_DUPLEX, fs, color, thickness);
-                    ty += th;
-                });
+                if (det.label_id == car_label_id)
+                {
+                    car_runner.get_score(det.track_id, [&](carclassification_score& score) {
+                        auto& color_label = vehicle_color_labels[score.color_index()];
+                        auto& make_label = vehicle_make_labels[score.make_index()];
+                        auto& type_label = vehicle_type_labels[score.type_index()];
+        
+                        cv::putText(mat, color_label, cv::Point(tx, ty), cv::FONT_HERSHEY_DUPLEX, fs, color, thickness);
+                        ty += th;
+                        cv::putText(mat, make_label, cv::Point(tx, ty), cv::FONT_HERSHEY_DUPLEX, fs, color, thickness);
+                        ty += th;
+                        cv::putText(mat, type_label, cv::Point(tx, ty), cv::FONT_HERSHEY_DUPLEX, fs, color, thickness);
+                        ty += th;
+                    });
+                }
             }
         }
 

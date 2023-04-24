@@ -39,7 +39,8 @@ struct carclassification_message_adapter
 using carclassifcation_client = inf_client<carclassification_message_adapter>;
 
 // Labels
-inline std::string vehicle_color_labels[] = { "beige", "black", "blue", "brown", "gold", "green", "grey", "orange", "pink", "purple", "red", "silver", "tan", "white", "yellow", };
+//inline std::string vehicle_color_labels[] = { "beige", "black", "blue", "brown", "gold", "green", "grey", "orange", "pink", "purple", "red", "silver", "tan", "white", "yellow", };
+inline std::string vehicle_color_labels[] = { "black", "blue", "grey", "red", "silver", "white", "yellow" };
 
 inline std::string vehicle_make_labels[] = { "acura", "audi", "bmw", "buick", "cadillac", "chevrolet", "chrysler", "dodge", "ford", "gmc", "honda", "hummer", "hyundai", "infiniti", "isuzu", "jaguar", "jeep", "kia", "landrover", "lexus", "lincoln", "mazda", "mercedes_benz", "mercury", "mini", "mitsubishi", "nissan", "oldsmobile", "plymouth", "pontiac", "porsche", "saab", "saturn", "scion", "subaru", "suzuki", "toyota", "volkswagen", "volvo", };
 

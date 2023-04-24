@@ -73,7 +73,8 @@ num_workers = 6
 
 [ml.carclassification]
 xmodels = [
-    "/usr/share/vitis_ai_library/models/chen_color_resnet18_pt/chen_color_resnet18_pt.xmodel",
+    #"/usr/share/vitis_ai_library/models/chen_color_resnet18_pt/chen_color_resnet18_pt.xmodel",
+    "/usr/share/vitis_ai_library/models/custom_car_color/custom_car_color.xmodel",
     "/usr/share/vitis_ai_library/models/vehicle_make_resnet18_pt/vehicle_make_resnet18_pt.xmodel",
     #"/usr/share/vitis_ai_library/models/vehicle_type_resnet18_pt/vehicle_type_resnet18_pt.xmodel",
     "/usr/share/vitis_ai_library/models/custom_car_type/custom_car_type.xmodel",
