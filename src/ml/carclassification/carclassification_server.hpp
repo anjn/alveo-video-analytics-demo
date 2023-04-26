@@ -57,26 +57,29 @@ struct carclassification_model
 
             for (auto& r : color_results[i].scores)
             {
-                result.color.score = r.score;
-                result.color.label_id = r.index;
-                result.color.label = color_results[i].lookup(r.index);
-                result.color.label.pop_back(); // remove last ','
+                auto& color = result.color.emplace_back();
+                color.score = r.score;
+                color.label_id = r.index;
+                color.label = color_results[i].lookup(r.index);
+                color.label.pop_back(); // remove last ','
             }
 
             for (auto& r : make_results[i].scores)
             {
-                result.make.score = r.score;
-                result.make.label_id = r.index;
-                result.make.label = make_results[i].lookup(r.index);
-                result.make.label.pop_back(); // remove last ','
+                auto& make = result.make.emplace_back();
+                make.score = r.score;
+                make.label_id = r.index;
+                make.label = make_results[i].lookup(r.index);
+                make.label.pop_back(); // remove last ','
             }
 
             for (auto& r : type_results[i].scores)
             {
-                result.type.score = r.score;
-                result.type.label_id = r.index;
-                result.type.label = type_results[i].lookup(r.index);
-                result.type.label.pop_back(); // remove last ','
+                auto& type = result.type.emplace_back();
+                type.score = r.score;
+                type.label_id = r.index;
+                type.label = type_results[i].lookup(r.index);
+                type.label.pop_back(); // remove last ','
             }
         }
 

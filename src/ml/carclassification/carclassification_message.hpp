@@ -26,9 +26,9 @@ struct carclassification_request_message
 
 struct carclassification_result_message
 {
-    classification_result color;
-    classification_result make;
-    classification_result type;
+    std::vector<classification_result> color;
+    std::vector<classification_result> make;
+    std::vector<classification_result> type;
 
     MSGPACK_DEFINE(color, make, type);
 };

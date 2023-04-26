@@ -39,7 +39,7 @@ cameras = [
 device-index = -1
 
 focus-size = 3
-focus-duration = 3
+focus-duration = 6
 
 output-rtsp = 1
 

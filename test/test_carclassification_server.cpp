@@ -22,9 +22,8 @@ int main(int argc, char** argv)
 {
     arg_begin("", 0, 0);
     arg_s(yolo_xmodel, "/usr/share/vitis_ai_library/models/yolov3_voc_tf/yolov3_voc_tf.xmodel", "Path of xmodel file");
-    arg_s(color_xmodel, "/usr/share/vitis_ai_library/models/chen_color_resnet18_pt/chen_color_resnet18_pt.xmodel", "Path of xmodel file");
+    arg_s(color_xmodel, "/usr/share/vitis_ai_library/models/custom_car_color/custom_car_color.xmodel", "Path of xmodel file");
     arg_s(make_xmodel, "/usr/share/vitis_ai_library/models/vehicle_make_resnet18_pt/vehicle_make_resnet18_pt.xmodel", "Path of xmodel file");
-    //arg_s(type_xmodel, "/usr/share/vitis_ai_library/models/vehicle_type_resnet18_pt/vehicle_type_resnet18_pt.xmodel", "Path of xmodel file");
     arg_s(type_xmodel, "/usr/share/vitis_ai_library/models/custom_car_type/custom_car_type.xmodel", "Path of xmodel file");
     arg_s(image, "/workspace/demo/samples/The_million_march_man.jpg", "Test image");
     arg_d(scale, 1.0, "Scale");
@@ -70,6 +69,7 @@ int main(int argc, char** argv)
     for (auto& det : result.detections)
     {
         std::cout << det.label << "\t" << det.prob << "\t" << det.x << "\t" << det.y << std::endl;
+
         if (det.prob >= 0.5)
         {
             auto car = crop_resize_for_carclassification(img, det, scale);
@@ -77,9 +77,15 @@ int main(int argc, char** argv)
             c_client.request(car);
             auto result = c_result_queue->pop();
 
-            std::cout << vehicle_color_labels[result.color.label_id] << std::endl;
-            std::cout << vehicle_make_labels[result.make.label_id] << std::endl;
-            std::cout << vehicle_type_labels[result.type.label_id] << std::endl;
+            for (auto color: result.color) {
+                std::cout << vehicle_color_labels[color.label_id] << "\t" << color.score << std::endl;
+            }
+            for (auto make: result.make) {
+                std::cout << vehicle_make_labels[make.label_id] << "\t" << make.score << std::endl;
+            }
+            for (auto type: result.type) {
+                std::cout << vehicle_type_labels[type.label_id] << "\t" << type.score << std::endl;
+            }
 
             cv::namedWindow("title", cv::WINDOW_NORMAL);
             cv::imshow("title", car);

@@ -59,9 +59,14 @@ struct carclassification_runner
                     {
                         std::unique_lock<std::mutex> lk(mutex_scores);
                         auto& score = track_id_to_scores[track_id];
-                        score.color_scores[result.color.label_id] += result.color.score;
-                        score.make_scores [result.make.label_id ] += result.make.score ;
-                        score.type_scores [result.type.label_id ] += result.type.score ;
+                        // Forget old scores
+                        for (auto& s: score.color_scores) s *= 0.9f;
+                        for (auto& s: score.make_scores ) s *= 0.9f;
+                        for (auto& s: score.type_scores ) s *= 0.9f;
+                        // Add new scores
+                        for (auto color: result.color) score.color_scores[color.label_id] += color.score;
+                        for (auto make : result.make ) score.make_scores [make.label_id ] += make.score ;
+                        for (auto type : result.type ) score.type_scores [type.label_id ] += type.score ;
                         score.count++;
                     }
 
