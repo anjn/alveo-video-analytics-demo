@@ -6,6 +6,7 @@ set -x
 opts=
 #opts+=" -ss 30"
 #opts+=" -t 60" # limit to 2min duration
+opts+=" -t 300"
 
 maxrate=4.0M
 bufsize=8.0M

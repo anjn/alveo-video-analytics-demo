@@ -2,8 +2,7 @@
 cameras = [
     #{ id="tp", location = "rtsp://tapo00:password@192.168.8.100:554/stream1",model = "yolov3", labels = [ 14 ] },
     { id="00", location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "yolov3", labels = [ 1, 5, 6, 13, 14 ] },
-    { id="00", location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "yolov3", labels = [ 1, 5, 6, 13, 14 ] },
-    { id="01", location = "rtsp://RTSP_SERVER_IP:8554/test01", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
+    { id="01", location = "rtsp://RTSP_SERVER_IP:8554/test01", model = "yolov3", labels = [ 1, 5, 6, 13, 14 ] },
     { id="02", location = "rtsp://RTSP_SERVER_IP:8554/test02", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
     { id="03", location = "rtsp://RTSP_SERVER_IP:8554/test03", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
     { id="04", location = "rtsp://RTSP_SERVER_IP:8554/test04", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
@@ -17,6 +16,7 @@ cameras = [
     { id="0c", location = "rtsp://RTSP_SERVER_IP:8554/test0c", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
     { id="0d", location = "rtsp://RTSP_SERVER_IP:8554/test0d", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
     { id="0e", location = "rtsp://RTSP_SERVER_IP:8554/test0e", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
+    { id="0f", location = "rtsp://RTSP_SERVER_IP:8554/test0f", model = "yolov3", labels = [ 1, 5, 6, 13 ] },
 
     #{ id="00", location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "yolov6", labels = [ 0 ] },
     #{ id="00", location = "rtsp://RTSP_SERVER_IP:8554/test00", model = "yolov6", labels = [ 0, 2, 3, 5, 7 ] },
