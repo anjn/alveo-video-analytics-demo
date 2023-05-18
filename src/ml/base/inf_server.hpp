@@ -34,6 +34,7 @@ struct inf_server_config
     int max_batch_latency;
     int max_batch_size;
     int num_workers;
+    bool enable;
 };
 
 template<typename Model>
@@ -66,6 +67,7 @@ public:
 
     void start(bool detach = false)
     {
+        if (!conf.enable) return;
         //std::cout << "'" << conf.name << "'" << std::endl;
         //std::cout << "'" << conf.address << "'" << std::endl;
 

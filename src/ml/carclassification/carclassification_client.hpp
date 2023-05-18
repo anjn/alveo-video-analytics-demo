@@ -39,19 +39,19 @@ struct carclassification_message_adapter
 using carclassifcation_client = inf_client<carclassification_message_adapter>;
 
 // Labels
-//inline std::string vehicle_color_labels[] = { "beige", "black", "blue", "brown", "gold", "green", "grey", "orange", "pink", "purple", "red", "silver", "tan", "white", "yellow", };
-inline std::string vehicle_color_labels[] = { "black", "blue", "grey", "red", "silver", "white", "yellow" };
+inline std::string vehicle_color_labels[] = { "beige", "black", "blue", "brown", "gold", "green", "grey", "orange", "pink", "purple", "red", "silver", "tan", "white", "yellow", };
+//inline std::string vehicle_color_labels[] = { "black", "blue", "grey", "red", "silver", "white", "yellow" };
 
 inline std::string vehicle_make_labels[] = { "acura", "audi", "bmw", "buick", "cadillac", "chevrolet", "chrysler", "dodge", "ford", "gmc", "honda", "hummer", "hyundai", "infiniti", "isuzu", "jaguar", "jeep", "kia", "landrover", "lexus", "lincoln", "mazda", "mercedes_benz", "mercury", "mini", "mitsubishi", "nissan", "oldsmobile", "plymouth", "pontiac", "porsche", "saab", "saturn", "scion", "subaru", "suzuki", "toyota", "volkswagen", "volvo", };
 
-//inline std::string vehicle_type_labels[] = { "SUV", "Convertible", "Coupe", "Hatchback", "Limousine", "Minivan", "Sedan", };
-inline std::string vehicle_type_labels[] = { "Convertible", "Hatchback", "Minivan", "SUV", "Sedan" };
+inline std::string vehicle_type_labels[] = { "SUV", "Convertible", "Coupe", "Hatchback", "Limousine", "Minivan", "Sedan", };
+//inline std::string vehicle_type_labels[] = { "Convertible", "Hatchback", "Minivan", "SUV", "Sedan" };
 
 // Utils
 static cv::Mat crop_resize_for_carclassification(
     const cv::Mat& img,
     const cv::Rect& box,
-    float scale_factor = 0.75
+    float scale_factor = 1.0
 ) {
     int x = box.x;
     int y = box.y;
@@ -75,6 +75,8 @@ static cv::Mat crop_resize_for_carclassification(
     // Crop and resize
     auto car = cv::Mat(224, 224, CV_8UC3);
     cv::Rect roi { x, y, width, height };
+    //std::cout << img.size << std::endl;
+    //std::cout << roi << std::endl;
     cv::resize(img(roi), car, cv::Size(car.cols, car.rows), 0, 0, cv::INTER_LINEAR);
 
     return car;
@@ -83,7 +85,7 @@ static cv::Mat crop_resize_for_carclassification(
 static cv::Mat crop_resize_for_carclassification(
     const cv::Mat& img,
     const yolo_bbox& det,
-    float scale_factor = 0.75
+    float scale_factor = 1.0
 ) {
     cv::Rect box {
         int(det.x * img.cols), int(det.y * img.rows),

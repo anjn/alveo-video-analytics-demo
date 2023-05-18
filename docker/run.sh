@@ -11,7 +11,7 @@ source $dir/env.sh
 
 name=demo-video
 port=
-card="v70"
+card=
 
 eval set -- "$VALID_ARGS"
 while [ : ]; do
@@ -40,10 +40,14 @@ fi
 
 prj_dir=$(dirname $(dirname $(readlink -f $0)))
 
+xrt_ver=$(cat /opt/xilinx/xrt/version.json | jq -r ".BUILD_BRANCH")
+
 if [[ -n $card ]] ; then
     # Find device
-    #cmd=scan # for older xrt
     cmd=examine
+    if [[ $xrt_ver == "2021.1" ]] ; then
+        cmd=scan # for older xrt
+    fi
 
     retry=10
 
@@ -97,7 +101,7 @@ docker run \
     -it \
     --name $name \
     $xclmgmt $xocl \
-    --shm-size=4g \
+    --shm-size=8g \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e DISPLAY=$DISPLAY \
     -e USER=$USER \

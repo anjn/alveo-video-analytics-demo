@@ -1,6 +1,8 @@
 #pragma once
+#include <iostream>
 #include <atomic>
 #include <cassert>
+#include <gst/gstelement.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -13,6 +15,7 @@ extern "C" {
 }
 #pragma GCC diagnostic pop
 
+#include "video/hw_config.hpp"
 #include "utils/queue_mt.hpp"
 
 std::string get_new_name(const std::string& base)
@@ -20,6 +23,12 @@ std::string get_new_name(const std::string& base)
     static std::atomic<int> id;
     return base + std::to_string(id++);
 }
+
+struct gst_element_base
+{
+    virtual std::string get_description() = 0;
+    virtual void set_params(GstElement* pipeline) = 0;
+};
 
 struct rtsp_receiver
 {
@@ -219,7 +228,6 @@ struct appsrc
     }
 };
 
-template<typename HwConfig>
 struct vvas_dec
 {
     const int dev_idx;
@@ -234,7 +242,7 @@ struct vvas_dec
     std::string get_description()
     {
         return
-            " " + HwConfig::decoder_element_name + " name=" + dec_name
+            " " + hw_config::get_instance()->get_decoder_element_name() + " name=" + dec_name
             ;
     }
 
@@ -242,12 +250,11 @@ struct vvas_dec
     {
         auto dec = gst_bin_get_by_name(GST_BIN(pipeline), dec_name.c_str());
         assert(dec);
-        HwConfig::set_decoder_params(dec, dev_idx);
+        hw_config::get_instance()->set_decoder_params(dec, dev_idx);
         gst_object_unref(dec);
     }
 };
 
-template<typename HwConfig>
 struct vvas_scaler
 {
     const int dev_idx;
@@ -276,7 +283,7 @@ struct vvas_scaler
     std::string get_description()
     {
         std::string desc =
-	        " vvas_xabrscaler name=" + scaler_name;
+            " " + hw_config::get_instance()->get_scaler_element_name() + " name=" + scaler_name;
 
         if (!multi_scaler) {
             assert(width > 0);
@@ -294,13 +301,74 @@ struct vvas_scaler
     {
         auto scaler = gst_bin_get_by_name(GST_BIN(pipeline), scaler_name.c_str());
         assert(scaler);
-        HwConfig::set_scaler_params(scaler, dev_idx);
+        hw_config::get_instance()->set_scaler_params(scaler, dev_idx);
         gst_object_unref(scaler);
     }
 };
 
-template<typename HwConfig>
-struct vvas_enc
+struct sw_multi_scaler
+{
+    const std::string scaler_name;
+
+    sw_multi_scaler() : 
+        scaler_name(get_new_name("scaler"))
+    {}
+
+    std::string get_description()
+    {
+        std::string desc;
+        desc += "   tee name=" + scaler_name;
+        desc += " ! queue";
+        desc += " ! fakesink";
+        return desc;
+    }
+
+    void set_params(GstElement* pipeline) {}
+
+    std::string get_source_pad(int index)
+    {
+        return scaler_name + ".";
+    }
+};
+
+struct enc_base : gst_element_base
+{
+    virtual void set_bitrate(int value) = 0;
+};
+
+struct x264enc : enc_base
+{
+    const std::string name;
+
+    int bitrate;
+
+    x264enc() :
+        name(get_new_name("enc")),
+        bitrate(16000)
+    {}
+
+    void set_bitrate(int value) override
+    {
+        bitrate = value;
+    }
+
+    std::string get_description() override
+    {
+        return " x264enc name=" + name + " speed-preset=ultrafast tune=zerolatency sliced-threads=true key-int-max=15 ref=1 bframes=0 cabac=0";
+    }
+
+    void set_params(GstElement* pipeline) override
+    {
+        auto enc = gst_bin_get_by_name(GST_BIN(pipeline), name.c_str());
+        assert(enc);
+        g_object_set(G_OBJECT(enc),
+                     "bitrate", bitrate,
+                     nullptr);
+        gst_object_unref(enc);
+    }
+};
+
+struct vvas_enc : enc_base
 {
     const int dev_idx;
     const std::string enc_name;
@@ -311,22 +379,63 @@ struct vvas_enc
         dev_idx(dev_idx_),
         enc_name(get_new_name("enc")),
         bitrate(16000)
-    {}
+    { }
 
-    std::string get_description()
+    void set_bitrate(int value) override
+    {
+        bitrate = value;
+    }
+
+    std::string get_description() override
     {
         return
-            " vvas_xvcuenc name=" + enc_name +
+            " " + hw_config::get_instance()->get_encoder_element_name() + " name=" + enc_name +
             " ! video/x-h264"
             ;
     }
 
-    void set_params(GstElement* pipeline)
+    void set_params(GstElement* pipeline) override
     {
         auto enc = gst_bin_get_by_name(GST_BIN(pipeline), enc_name.c_str());
         assert(enc);
-        HwConfig::set_encoder_params(enc, dev_idx, bitrate);
+        hw_config::get_instance()->set_encoder_params(enc, dev_idx, bitrate);
         gst_object_unref(enc);
+    }
+};
+
+struct hw_enc : enc_base
+{
+    std::shared_ptr<enc_base> elm;
+
+    hw_enc(int dev_idx = 0)
+    {
+        bool enable = false;
+        if (hw_config::get_instance()->get_encoder_element_name() != "") enable = true;
+        if (const char* e = std::getenv("DISABLE_HW_ENC"))
+            if (std::string(e) == "1") enable = false;
+
+        if (enable) {
+            std::cout << "HW enc enabled" << std::endl;
+            elm = std::make_shared<vvas_enc>(dev_idx);
+        } else {
+            std::cout << "HW enc disabled" << std::endl;
+            elm = std::make_shared<x264enc>();
+        }
+    }
+
+    void set_bitrate(int value) override
+    {
+        elm->set_bitrate(value);
+    }
+
+    std::string get_description() override
+    {
+        return elm->get_description();
+    }
+
+    void set_params(GstElement* pipeline) override
+    {
+        elm->set_params(pipeline);
     }
 };
 
@@ -432,33 +541,6 @@ struct tee
     }
 
     void set_params(GstElement* pipeline) {}
-};
-
-struct x264enc
-{
-    const std::string name;
-
-    int bitrate;
-
-    x264enc() :
-        name(get_new_name("enc")),
-        bitrate(16000)
-    {}
-
-    std::string get_description()
-    {
-        return " x264enc name=" + name + " speed-preset=ultrafast tune=zerolatency sliced-threads=true key-int-max=15 ref=1 bframes=0 cabac=0";
-    }
-
-    void set_params(GstElement* pipeline)
-    {
-        auto enc = gst_bin_get_by_name(GST_BIN(pipeline), name.c_str());
-        assert(enc);
-        g_object_set(G_OBJECT(enc),
-                     "bitrate", bitrate,
-                     nullptr);
-        gst_object_unref(enc);
-    }
 };
 
 template<typename... Args>

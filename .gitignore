@@ -6,6 +6,7 @@
 *.png
 *.jpg
 *.ts
+*.264
 /docker/packages
 /docker/models
 /build

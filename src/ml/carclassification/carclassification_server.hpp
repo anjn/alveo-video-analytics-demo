@@ -21,14 +21,14 @@ struct carclassification_model
 
     std::unique_ptr<vitis::ai::Classification> color_model;
     std::unique_ptr<vitis::ai::VehicleClassification> make_model;
-    //std::unique_ptr<vitis::ai::VehicleClassification> type_model;
-    std::unique_ptr<vitis::ai::Classification> type_model;
+    std::unique_ptr<vitis::ai::VehicleClassification> type_model;
+    //std::unique_ptr<vitis::ai::Classification> type_model;
 
     carclassification_model(const std::vector<std::string>& xmodel_paths) :
         color_model(vitis::ai::Classification::create(xmodel_paths[0])),
         make_model(vitis::ai::VehicleClassification::create(xmodel_paths[1])),
-        //type_model(vitis::ai::VehicleClassification::create(xmodel_paths[2]))
-        type_model(vitis::ai::Classification::create(xmodel_paths[2]))
+        type_model(vitis::ai::VehicleClassification::create(xmodel_paths[2]))
+        //type_model(vitis::ai::Classification::create(xmodel_paths[2]))
     {}
 
     std::vector<result_t> run(const std::vector<request_t>& requests)

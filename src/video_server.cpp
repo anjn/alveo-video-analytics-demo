@@ -14,7 +14,6 @@
 #include "video/rtsp_server.hpp"
 #include "video/gst_app_bgr_utils.hpp"
 #include "video/gst_pipeline_utils.hpp"
-#include "video/hw_config_v70.hpp"
 #include "utils/queue_mt.hpp"
 #include "utils/time_utils.hpp"
 
@@ -37,7 +36,6 @@ struct compositor_bgr
     cv::Mat mat;
     int gst_buffer_size;
     GstBuffer* last_buffer = nullptr;
-    std::thread thread;
     GstClockTime timestamp = 0;
     int fps_n = 15;
     int fps_d = 1;
@@ -172,29 +170,28 @@ struct compositor_bgr
     }
 };
 
-template<typename HwConfig>
 struct rtsp_ml_base
 {
     const std::vector<cv::Size> sizes;
     
     rtsp_receiver receiver;
-    vvas_dec<HwConfig> dec;
-    vvas_scaler<HwConfig> scaler;
+    vvas_dec dec;
+    //vvas_scaler scaler;
+    sw_multi_scaler scaler;
     std::vector<appsink> sinks;
 
     app2queue_bgr::queue_ptr_t queue;
-
-    GstElement* pipeline;
 
     rtsp_ml_base(const std::string& location, int device_index, std::vector<cv::Size> sizes_) :
         sizes(sizes_),
         receiver(location),
         dec(device_index),
-        scaler(device_index),
+        //scaler(device_index),
+        scaler(),
         sinks(sizes.size()),
         queue(std::make_shared<app2queue_bgr::queue_t>())
     {
-        scaler.multi_scaler = true;
+        //scaler.multi_scaler = true;
     }
 
     std::string get_description()
@@ -203,8 +200,21 @@ struct rtsp_ml_base
 
         for (int i = 0; i < sizes.size(); i++)
         {
-            desc += " " + scaler.scaler_name + ".src_" + std::to_string(i);
+            //desc += " " + scaler.scaler_name + ".src_" + std::to_string(i);
+            desc += " " + scaler.get_source_pad(i);
+
+            //if (!hw_config::get_instance()->support_scaler_bgr_output())
+            //{
+            //    desc += " ! video/x-raw, width=" + std::to_string(sizes[i].width) + ", height=" + std::to_string(sizes[i].height) + ", format=NV12";
+            //    desc += " ! videoconvert";
+            //}
+            // TODO
+            desc += " ! queue";
+            desc += " ! videoscale";
+            desc += " ! videoconvert";
+
             desc += " ! video/x-raw, width=" + std::to_string(sizes[i].width) + ", height=" + std::to_string(sizes[i].height) + ", format=BGR";
+
             desc += " ! queue ! ";
             desc += sinks[i].get_description();
         }
@@ -224,10 +234,10 @@ struct rtsp_ml_base
     }
 };
 
-template<typename A2Q, typename HwConfig>
-struct rtsp_ml : public rtsp_ml_base<HwConfig>
+template<typename A2Q>
+struct rtsp_ml : public rtsp_ml_base
 {
-    using parent_t = rtsp_ml_base<HwConfig>;
+    using parent_t = rtsp_ml_base;
     using parent_t::parent_t;
 
     std::shared_ptr<A2Q> a2q;
@@ -250,11 +260,11 @@ struct rtsp_ml : public rtsp_ml_base<HwConfig>
 int main(int argc, char** argv)
 {
     arg_begin("", 0, 0);
-    //arg_i(max_devices, 2, "Num available devices");
+    arg_i(num_devices, 1, "Num available devices");
     arg_end;
 
     // HW config
-    //hw_config_v70::max_devices = max_devices;
+    hw_config::get_instance()->set_num_devices(num_devices);
 
     // Load config
     const auto config = toml::parse("config.toml");
@@ -270,10 +280,16 @@ int main(int argc, char** argv)
 
     std::string ml_server_ip = "127.0.0.1";
     if (const char* e = std::getenv("ML_SERVER_IP")) ml_server_ip = e;
-    bcc_server_address    = "tcp://" + ml_server_ip + ":" + std::to_string(toml::find<int>(config, "ml", "bcc", "port"));
-    yolov3_server_address = "tcp://" + ml_server_ip + ":" + std::to_string(toml::find<int>(config, "ml", "yolov3", "port"));
-    yolov6_server_address = "tcp://" + ml_server_ip + ":" + std::to_string(toml::find<int>(config, "ml", "yolov6", "port"));
-    car_server_address = "tcp://" + ml_server_ip + ":" + std::to_string(toml::find<int>(config, "ml", "carclassification", "port"));
+
+    auto set_address = [&](std::string name, std::string& address) {
+        if (toml::find(config, "ml").contains(name))
+            address = "tcp://" + ml_server_ip + ":" + std::to_string(toml::find<int>(config, "ml", name, "port"));
+    };
+
+    set_address("bcc", bcc_server_address);
+    set_address("yolov3", yolov3_server_address);
+    set_address("yolov6", yolov6_server_address);
+    set_address("carclassification", car_server_address);
 
     std::string host_server_ip = "127.0.0.1";
     if (const char* e = std::getenv("HOST_SERVER_IP")) host_server_ip = e;
@@ -284,7 +300,7 @@ int main(int argc, char** argv)
     int device_index = 0;
 
     std::vector<app2queue_bgr::queue_ptr_t> queues;
-    std::vector<std::shared_ptr<rtsp_ml_base<hw_config_v70>>> ml_pipelines;
+    std::vector<std::shared_ptr<rtsp_ml_base>> ml_pipelines;
 
     std::vector<cv::Size> bcc_sizes;
     bcc_sizes.push_back(cv::Size(960, 540));
@@ -311,7 +327,7 @@ int main(int argc, char** argv)
 
         if (model == "bcc")
         {
-            auto bcc = std::make_shared<rtsp_ml<app2queue_bcc, hw_config_v70>>(loc, device_index++, bcc_sizes);
+            auto bcc = std::make_shared<rtsp_ml<app2queue_bcc>>(loc, device_index++, bcc_sizes);
             bcc->start();
 
             if (server_info.host_found)
@@ -322,7 +338,7 @@ int main(int argc, char** argv)
         else if (model == "yolov3" || model == "yolov6")
         {
             std::vector<cv::Size>* sizes = model == "yolov3" ? &yolov3_sizes : &yolov6_sizes;
-            auto yolo = std::make_shared<rtsp_ml<app2queue_yolo, hw_config_v70>>(loc, device_index++, *sizes);
+            auto yolo = std::make_shared<rtsp_ml<app2queue_yolo>>(loc, device_index++, *sizes);
             yolo->start();
 
             yolo->a2q->set_yolo_version(model);
@@ -347,9 +363,8 @@ int main(int argc, char** argv)
     rawvideomedia raw;
     raw.format = "NV12";
 
-    //vvas_enc<hw_config_v70> enc(device_index);
-    x264enc enc;
-    enc.bitrate = output_bitrate;
+    hw_enc enc(device_index);
+    enc.set_bitrate(output_bitrate);
 
     std::cout << rtsp_server_location << std::endl;
     rtspclientsink sink(rtsp_server_location);

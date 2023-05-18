@@ -94,7 +94,7 @@ $ sudo chmod +x /usr/local/bin/docker-compose
 
 ### Install XRT 2021.1 (2.11.691)
 ```bash
-$ wget "https://github.com/Xilinx/video-sdk/raw/v2.0/release/U30_Ubuntu_20.04_v2.0/xrt_202110.2.11.691_20.04-amd64-xrt.deb" -O xrt_202110.2.11.691_20.04-amd64-xrt.deb
+$ wget "https://github.com/Xilinx/video-sdk/raw/release_2.0/release/U30_Ubuntu_20.04_v2.0/xrt_202110.2.11.691_20.04-amd64-xrt.deb" -O xrt_202110.2.11.691_20.04-amd64-xrt.deb
 $ sudo apt install -y ./xrt_202110.2.11.691_20.04-amd64-xrt.deb
 ```
 
@@ -125,9 +125,9 @@ $ sudo apt install -y ./u55c/*.deb
 Install U30 platform
 ```bash
 $ mkdir u30
-$ wget "https://github.com/Xilinx/video-sdk/raw/v2.0/release/U30_Ubuntu_20.04_v2.0/raptor_packages/xilinx-sc-fw-u30_6.3.8-1.cd35f69_all.deb" -O u30/xilinx-sc-fw-u30_6.3.8-1.cd35f69_all.deb
-$ wget "https://github.com/Xilinx/video-sdk/raw/v2.0/release/U30_Ubuntu_20.04_v2.0/raptor_packages/xilinx-u30-gen3x4-base_2-3391496_all.deb" -O u30/xilinx-u30-gen3x4-base_2-3391496_all.deb
-$ wget "https://github.com/Xilinx/video-sdk/raw/v2.0/release/U30_Ubuntu_20.04_v2.0/raptor_packages/xilinx-u30-gen3x4-validate_2-3380610_all.deb" -O u30/xilinx-u30-gen3x4-validate_2-3380610_all.deb
+$ wget "https://github.com/Xilinx/video-sdk/raw/release_2.0/release/U30_Ubuntu_20.04_v2.0/raptor_packages/xilinx-sc-fw-u30_6.3.8-1.cd35f69_all.deb" -O u30/xilinx-sc-fw-u30_6.3.8-1.cd35f69_all.deb
+$ wget "https://github.com/Xilinx/video-sdk/raw/release_2.0/release/U30_Ubuntu_20.04_v2.0/raptor_packages/xilinx-u30-gen3x4-base_2-3391496_all.deb" -O u30/xilinx-u30-gen3x4-base_2-3391496_all.deb
+$ wget "https://github.com/Xilinx/video-sdk/raw/release_2.0/release/U30_Ubuntu_20.04_v2.0/raptor_packages/xilinx-u30-gen3x4-validate_2-3380610_all.deb" -O u30/xilinx-u30-gen3x4-validate_2-3380610_all.deb
 $ sudo apt install -y ./u30/*.deb
 ```
 Reboot

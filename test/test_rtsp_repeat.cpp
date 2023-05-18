@@ -48,8 +48,8 @@ int main(int argc, char** argv)
 
     // Create rtsp receiver pipeline
     rtsp_receiver receiver { location };
-    vvas_dec<hw_config_u30> dec { dev_idx };
-    vvas_scaler<hw_config_u30> scaler { dev_idx, width, height };
+    vvas_dec dec { dev_idx };
+    vvas_scaler scaler { dev_idx, width, height };
     appsink sink {};
 
     build_pipeline_and_play(receiver, dec, scaler, sink);
@@ -63,7 +63,7 @@ int main(int argc, char** argv)
     //raw.framerate_n = 15;
     //raw.format = "NV12";
 
-    vvas_enc<hw_config_u30> enc;
+    vvas_enc enc;
 
     rtspclientsink sink1("rtsp://localhost:8554/test");
 

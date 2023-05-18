@@ -14,7 +14,10 @@
 extern "C" {
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
+#include <gst/app/gstappsrc.h>
+#include <gst/video/video.h>
 }
+#pragma GCC diagnostic pop
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
@@ -82,5 +85,89 @@ struct app2queue_bgr
     }
 
     virtual void proc_buffer(std::vector<cv::Mat>& mat) {}
+};
+
+
+struct queue2app_bgr
+{
+    using this_type = queue2app_bgr;
+    using queue_ptr_t = app2queue_bgr::queue_ptr_t;
+
+    queue_ptr_t queue;
+    GstAppSrc* appsrc;
+
+    int width;
+    int height;
+
+    int gst_buffer_size;
+    GstBuffer* last_buffer = nullptr;
+    GstClockTime timestamp = 0;
+    int fps_n = 15;
+    int fps_d = 1;
+
+    queue2app_bgr(
+        queue_ptr_t& queue_,
+        GstAppSrc* appsrc_,
+        int width_,
+        int height_
+    ) :
+        queue(queue_), appsrc(appsrc_), width(width_), height(height_)
+    {
+        GstVideoInfo info;
+        gst_video_info_set_format(&info, GST_VIDEO_FORMAT_BGR, width, height);
+        gst_buffer_size = info.size;
+        last_buffer = gst_buffer_new_allocate(nullptr, gst_buffer_size, nullptr);
+    }
+
+    void start()
+    {
+        g_signal_connect(appsrc, "need-data", G_CALLBACK(&this_type::need_data), this);
+
+        GstCaps* caps = gst_caps_new_simple("video/x-raw",
+                                            "format", G_TYPE_STRING, "BGR",
+                                            "width",  G_TYPE_INT, width,
+                                            "height", G_TYPE_INT, height,
+                                            "framerate", GST_TYPE_FRACTION, fps_n, fps_d,
+                                            nullptr);
+        gst_app_src_set_caps(appsrc, caps);
+        gst_caps_unref(caps);
+    }
+
+    static void need_data(GstElement *source, guint size, this_type* obj)
+    {
+        obj->push_buffer();
+    }
+
+    void push_buffer()
+    {
+        GstBuffer* buffer = nullptr;
+
+        if (queue->size() > 0)
+        {
+            cv::Mat mat;
+            while (queue->size() > 0) mat = queue->pop();
+
+            buffer = gst_buffer_new_allocate(nullptr, gst_buffer_size, nullptr);
+
+            GstMapInfo info;
+            gst_buffer_map(buffer, &info, GST_MAP_READ);
+            std::memcpy(info.data, mat.data, width * height * 3);
+            gst_buffer_unmap(buffer, &info);
+
+            if (last_buffer) gst_buffer_unref(last_buffer);
+            last_buffer = gst_buffer_ref(buffer);
+        }
+        else
+        {
+            buffer = gst_buffer_copy(last_buffer);
+        }
+
+        // Set timestamp
+        GST_BUFFER_PTS(buffer) = timestamp;
+        GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale_int(fps_d, GST_SECOND, fps_n);
+        timestamp += GST_BUFFER_DURATION(buffer);
+
+        gst_app_src_push_buffer(appsrc, buffer);
+    }
 };
 

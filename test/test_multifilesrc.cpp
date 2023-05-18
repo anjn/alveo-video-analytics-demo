@@ -3,6 +3,7 @@
 #include <arg/arg.h>
 
 #include "video/gst_pipeline_utils.hpp"
+#include "video/hw_config_u30.hpp"
 #include "video/hw_config_v70.hpp"
 
 int main(int argc, char** argv)
@@ -17,12 +18,12 @@ int main(int argc, char** argv)
     arg_end;
 
     multifilesrc src { location };
-    vvas_dec<hw_config_v70> dec { dev_idx };
-    vvas_scaler<hw_config_v70> scaler { dev_idx, width, height };
+    vvas_dec dec { dev_idx };
+    vvas_scaler scaler { dev_idx, width, height };
     fpsdisplaysink sink {};
+    //autovideosink sink {};
 
-    auto pipeline = build_pipeline(src, dec, scaler, sink);
-    gst_element_set_state(pipeline, GST_STATE_PLAYING);
+    auto pipeline = build_pipeline_and_play(src, dec, scaler, sink);
 
     auto loop = g_main_loop_new(nullptr, false);
     g_main_loop_run(loop);

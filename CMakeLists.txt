@@ -79,7 +79,7 @@ function(add_target NAME DIR)
         PkgConfig::xrt
         ${OpenCV_LIBS}
         -lvitis_ai_library-yolov3
-        -lvitis_ai_library-yolov6
+        #-lvitis_ai_library-yolov6
         -lvitis_ai_library-classification
         -lvitis_ai_library-vehicleclassification
         -lvitis_ai_library-dpu_task
@@ -94,16 +94,21 @@ function(add_target NAME DIR)
     )
 endfunction()
 
-foreach(TARGET ml_server video_server extract_objects)
+foreach(TARGET
+        ml_server
+        video_server
+        #extract_objects
+)
     add_target(${TARGET} src)
 endforeach()
 
 foreach(TEST
         test_yolov3 test_yolov3_batch test_yolov3_server test_bcc_server
-        test_yolov6_server
+        #test_yolov6_server
         test_carclassification_server
         test_gst_pipeline_utils test_rtsp_server test_rtsp_repeat test_rtspclientsink
         test_multifilesrc test_multiple_pipelines
+        test_video_pipeline test_multi_scaler
         test_influxdb
 )
     add_target(${TEST} test)

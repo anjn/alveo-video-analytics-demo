@@ -65,7 +65,7 @@ struct app2queue_yolo : app2queue_bgr
         }
 
         clients.clear();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 4; i++) {
             clients.push_back(std::make_shared<yolo_client>(server_address, result_queue));
         }
     }

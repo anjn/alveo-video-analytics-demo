@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 
 #include "ml/carclassification/carclassification_client.hpp"
 #include "utils/time_utils.hpp"
@@ -9,26 +10,30 @@ inline fps_counter car_fps(8000);
 
 struct carclassification_score
 {
+    static const int num_color = 15;
+    static const int num_make = 39;
+    static const int num_type = 7;
+
     int count = 0;
-    float color_scores[15];
-    float make_scores[39];
-    float type_scores[7];
+    std::array<float, num_color> color_scores;
+    std::array<float, num_make > make_scores ;
+    std::array<float, num_type > type_scores ;
 
     carclassification_score()
     {
-        std::fill(color_scores, color_scores + 15, 0);
-        std::fill(make_scores, make_scores + 39, 0);
-        std::fill(type_scores, type_scores + 7, 0);
+        std::fill(std::begin(color_scores), std::end(color_scores), 0);
+        std::fill(std::begin(make_scores ), std::end(make_scores ), 0);
+        std::fill(std::begin(type_scores ), std::end(type_scores ), 0);
     }
 
     size_t color_index() {
-        return std::distance(color_scores, std::max_element(color_scores, color_scores + 15));
+        return std::distance(std::begin(color_scores), std::max_element(std::begin(color_scores), std::end(color_scores)));
     }
     size_t make_index() {
-        return std::distance(make_scores, std::max_element(make_scores, make_scores + 39));
+        return std::distance(std::begin(make_scores), std::max_element(std::begin(make_scores), std::end(make_scores)));
     }
     size_t type_index() {
-        return std::distance(type_scores, std::max_element(type_scores, type_scores + 7));
+        return std::distance(std::begin(type_scores), std::max_element(std::begin(type_scores), std::end(type_scores)));
     }
 };
 
@@ -64,9 +69,9 @@ struct carclassification_runner
                         for (auto& s: score.make_scores ) s *= 0.9f;
                         for (auto& s: score.type_scores ) s *= 0.9f;
                         // Add new scores
-                        for (auto color: result.color) score.color_scores[color.label_id] += color.score;
-                        for (auto make : result.make ) score.make_scores [make.label_id ] += make.score ;
-                        for (auto type : result.type ) score.type_scores [type.label_id ] += type.score ;
+                        for (auto color: result.color) { if (color.label_id < score.color_scores.size()) score.color_scores[color.label_id] += color.score; }
+                        for (auto make : result.make ) { if (make .label_id < score.make_scores .size()) score.make_scores [make .label_id] += make .score; }
+                        for (auto type : result.type ) { if (type .label_id < score.type_scores .size()) score.type_scores [type .label_id] += type .score; }
                         score.count++;
                     }
 

@@ -2,25 +2,27 @@
 #include <cassert>
 #include <string>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-extern "C" {
-#include <gst/gst.h>
-}
-#pragma GCC diagnostic pop
+#include "video/hw_config_base.hpp"
 
-struct hw_config_v70
+struct hw_config_v70 : public hw_config_base
 {
     inline static const std::string decoder_element_name = "vvas_xvideodec";
     inline static const std::string xclbin = "/opt/xilinx/xclbin/v70.xclbin";
-    inline static const int num_devices = 1;
     inline static const int num_decoder = 16;
     inline static const int num_scaler = 2;
 
-    static void set_decoder_params(
+    int num_devices = 2;
+
+    std::string get_decoder_element_name() override { return "vvas_xvideodec"; };
+    std::string get_scaler_element_name() override { return "vvas_xabrscaler"; };
+
+    void set_num_devices(int num) override { num_devices = num; }
+    int get_num_devices() override { return num_devices; };
+
+    void set_decoder_params(
         GstElement* elm,
-        int dev_idx = 0
-    ) {
+        int dev_idx
+    ) override {
         int decoder_idx = dev_idx % num_decoder; // soft kernel index
         dev_idx = 0;
 
@@ -43,10 +45,10 @@ struct hw_config_v70
                      nullptr);
     }
 
-    static void set_scaler_params(
+    void set_scaler_params(
         GstElement* elm,
-        int dev_idx = 0
-    ) {
+        int dev_idx
+    ) override {
         int scaler_idx = (dev_idx / (num_decoder / num_scaler)) % num_scaler;
         dev_idx = 0;
 
